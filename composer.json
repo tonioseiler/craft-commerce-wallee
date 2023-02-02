@@ -32,10 +32,10 @@
         }
     },
     "extra": {
-        "name": "Commerce wallee",
+        "name": "Commerce Wallee Gateway",
         "handle": "commerce-wallee",
         "developer": "Furbo GmbH",
-        "developerUrl": "http://www.furbo.ch",
+        "developerUrl": "https://www.furbo.ch",
         "documentationUrl": "???",
         "changelogUrl": "???",
         "components": {
