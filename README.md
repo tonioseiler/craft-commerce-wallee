@@ -1,7 +1,7 @@
 <img src="resources/img/wallee.png" width="100" height="100">
 
 <h1 align="left">Walle for Craft Commerce</h1>
-<p>This plugin provides a [Wallee](https://wallee.com/) integration for [Craft Commerce](https://craftcms.com/commerce).</p>
+This plugin provides a [Wallee](https://wallee.com/) integration for [Craft Commerce](https://craftcms.com/commerce).
 
 
 ## Requirements
