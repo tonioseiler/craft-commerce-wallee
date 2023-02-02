@@ -1,6 +1,6 @@
 {
     "name": "furbo/craft-commerce-wallee",
-    "description": "wallee integration for Craft Commerce 3",
+    "description": "Craft Commerce Payment Gateway for Wallee",
     "type": "craft-plugin",
     "version": "1.0.0",
     "keywords": [
@@ -11,10 +11,10 @@
         "commerce wallee"
     ],
     "support": {
-        "docs": "???",
-        "issues": "???"
+        "docs": "https://github.com/tonioseiler/craft-commerce-wallee/blob/main/README.md",
+        "issues": "https://github.com/tonioseiler/craft-commerce-wallee/issues"
     },
-    "license": "MIT",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Furbo GmbH",
