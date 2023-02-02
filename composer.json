@@ -22,8 +22,9 @@
         }
     ],
     "require": {
-        "craftcms/cms": "^3.0.0",
-        "craftcms/commerce": "^2.2.0|^3.0",
+        "php": "^8.0.2",
+        "craftcms/cms": "^4.0.0",
+        "craftcms/commerce": "^4.0.0",
         "wallee/sdk": "^3.1.4"
     },
     "autoload": {
