@@ -89,7 +89,7 @@ class Gateway extends BaseGateway
     }
 
 
-    public function getSettingsHtml()
+    public function getSettingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate('commerce-wallee/gatewaySettings/gatewaySettings', ['gateway' => $this]);
     }
@@ -111,7 +111,7 @@ class Gateway extends BaseGateway
         return $this->performRequest($completeRequest, $transaction);
     }
 
-    public function getPaymentFormHtml(array $params)
+    public function getPaymentFormHtml(array $params): ?string
     {
         $this->initialize();
 
@@ -169,15 +169,14 @@ class Gateway extends BaseGateway
     }
 
     private function fetchPaymentMethods(){
-        $paymentMethods = $this->client->getTransactionService()->fetchPaymentMethods($this->options->spaceId, $this->transaction->getId(), 'iframe');
-        return $paymentMethods;
+        return $this->client->getTransactionService()->fetchPaymentMethods($this->options->spaceId, $this->transaction->getId(), 'iframe');
     }
 
     /**
      * @param string $mode lightbox or iframe
      * @return string
      */
-    private function getJavascriptUrl($mode = 'lightbox'){
+    private function getJavascriptUrl(string $mode = 'lightbox'): string{
         try {
             
             if($mode == 'lightbox'){
@@ -197,10 +196,10 @@ class Gateway extends BaseGateway
     /**
      * @return string
      */
-    private function getPageUrl(){
+    private function getPageUrl(): string
+    {
         $transactionService = new \Wallee\Sdk\Service\TransactionPaymentPageService($this->client);
-        $url = $transactionService->paymentPageUrl($this->options->spaceId, $this->transaction->getId());
-        return $url;
+        return $transactionService->paymentPageUrl($this->options->spaceId, $this->transaction->getId());
     }
 
     public function processWebHook(): WebResponse

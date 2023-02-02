@@ -1,12 +1,12 @@
-# Commerce wallee plugin for Craft CMS 3.x
+<img src="resources/img/wallee.png" width="100" height="100">
 
-wallee integration for Craft Commerce 3
+<h1 align="left">Walle for Craft Commerce</h1>
+<p>This plugin provides a [Wallee](https://wallee.com/) integration for [Craft Commerce](https://craftcms.com/commerce).</p>
 
-![Screenshot](resources/img/wallee.png)
 
 ## Requirements
 
-This plugin requires Craft CMS 3.0.0-beta.23 or later.
+This plugin requires Craft CMS 4.0 or later.
 
 ## Installation
 
