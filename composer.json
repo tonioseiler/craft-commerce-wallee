@@ -1,5 +1,5 @@
 {
-    "name": "craftcms/commerce-wallee",
+    "name": "furbo/commerce-wallee",
     "description": "wallee integration for Craft Commerce 3",
     "type": "craft-plugin",
     "version": "1.0.0",
