@@ -6,8 +6,8 @@
 
 ## Requirements
 
-- Craft CMS 4.0 or later
-- Craft Commerce 4.0 or later
+- Craft CMS 3.0 or later
+- Craft Commerce 3.0 or later
 
 ## Installation
 
