@@ -2,7 +2,7 @@
 
 wallee integration for Craft Commerce 3
 
-![Screenshot](resources/img/plugin-logo.png)
+![Screenshot](resources/img/wallee.png)
 
 ## Requirements
 
