@@ -1,0 +1,9 @@
+<div class="wallee-rest-form">
+    <div class="wallee-rest-form-loading">Loading...</div>
+</div>
+
+{% js %}
+window.LightboxCheckoutHandler.startPayment(1, function(){
+    console.error('An error occurred during the initialization of the payment lightbox.');
+});
+{% endjs %}

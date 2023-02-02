@@ -1,0 +1,43 @@
+{% from "_includes/forms" import textField, lightswitchField, autosuggestField, selectField %}
+
+{{ selectField({
+    label: "Integration Mode"|t('commerce-wallee'),
+    id: 'integrationMode',
+    name: 'integrationMode',
+    options: [
+        {label: 'Lightbox', value: 'lightbox'},
+        {label: 'IFrame', value: 'iframe'},
+        {label: 'Page', value: 'page'},
+    ],
+    value: gateway.integrationMode,
+}) }}
+
+{{ autosuggestField({
+    label: "Space id"|t('commerce-wallee'),
+    id: 'spaceId',
+    class: 'ltr',
+    name: 'spaceId',
+    suggestEnvVars: false,
+    value: gateway.spaceId,
+    errors: gateway.getErrors('spaceId')
+}) }}
+
+{{ autosuggestField({
+    label: "User id"|t('commerce-wallee'),
+    id: 'userId',
+    class: 'ltr',
+    name: 'userId',
+    suggestEnvVars: false,
+    value: gateway.userId,
+    errors: gateway.getErrors('userId')
+}) }}
+
+{{ autosuggestField({
+    label: "Secret key"|t('commerce-wallee'),
+    id: 'apiSecretKey',
+    class: 'ltr',
+    name: 'apiSecretKey',
+    suggestEnvVars: false,
+    value: gateway.apiSecretKey,
+    errors: gateway.getErrors('apiSecretKey')
+}) }}

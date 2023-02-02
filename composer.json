@@ -1,0 +1,46 @@
+{
+    "name": "craftcms/commerce-wallee",
+    "description": "wallee integration for Craft Commerce 3",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "commerce wallee"
+    ],
+    "support": {
+        "docs": "???",
+        "issues": "???"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Furbo GmbH",
+            "homepage": "http://www.furbo.ch"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0",
+        "craftcms/commerce": "^2.2.0|^3.0",
+        "wallee/sdk": "^3.1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "craft\\commerce\\wallee\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Commerce wallee",
+        "handle": "commerce-wallee",
+        "developer": "Furbo GmbH",
+        "developerUrl": "http://www.furbo.ch",
+        "documentationUrl": "???",
+        "changelogUrl": "???",
+        "components": {
+            "commerceWalleeService": "craft\\commerce\\wallee\\services\\CommerceWalleeService"
+        },
+        "class": "craft\\commerce\\wallee\\CommerceWallee"
+    }
+}
