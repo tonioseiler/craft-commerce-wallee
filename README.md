@@ -26,7 +26,7 @@ Open your terminal and run the following commands:
 cd /path/to/my-project.test
 
 # tell Composer to load the plugin
-composer require composer require furbo/craft-commerce-wallee
+composer require furbo/craft-commerce-wallee
 
 # tell Craft to install the plugin
 php craft install/plugin craft-commerce-wallee
@@ -54,4 +54,4 @@ php craft install/plugin craft-commerce-wallee
 
 ## Support
 
-If you have any issues with this plugin, please [create an issue](https://github.com/tonioseiler/craft-commerce-wallee/issues) on GitHub or contact us at [Furbo](mailto:admin@furbo.ch).
+If you have any issues with this plugin, please [create an issue](https://github.com/tonioseiler/craft-commerce-wallee/issues) on GitHub or contact us at [Furbo](mailto:support@furbo.ch).
