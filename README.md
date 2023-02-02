@@ -3,6 +3,22 @@
 <h1 align="left">Wallee for Craft Commerce</h1>
 <p>This plugin provides a <a href="https://wallee.com/">Wallee</a> integration for <a href="https://craftcms.com/commerce">Craft Commerce</a>.</p>
 
+Add Wallee as a payment gateway in your craft commerce installation. Wallee allows configuration of many payment methods such as:
+* Credit Cards
+* Postfinance
+* Twint
+* Apple Pay
+* Google Pay
+* PayPal
+* Klarna
+* Boncard
+* Luncheck
+* ...
+
+### Configurable modes:
+Choose between lightbox, iframe and fullpage integration mode.
+
+Packages availabel for Craft 3 and 4.
 
 ## Requirements
 
