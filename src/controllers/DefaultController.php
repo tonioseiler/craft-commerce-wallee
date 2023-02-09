@@ -71,7 +71,7 @@ class DefaultController extends BaseController
      *         The actions must be in 'kebab-case'
      * @access protected
      */
-    protected $allowAnonymous = ['index', 'prepare-payment', 'complete'];
+    protected int|bool|array $allowAnonymous = ['index', 'prepare-payment', 'complete', 'failed'];
 
     // Public Methods
     // =========================================================================
@@ -150,9 +150,17 @@ class DefaultController extends BaseController
         $transaction->type = TransactionRecord::TYPE_PURCHASE;
         $transaction->status = TransactionRecord::STATUS_SUCCESS;
         if(Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
-            Craft::$app->getResponse()->redirect(UrlHelper::siteUrl('/shop/customer/order', [ 'number' => $order->number, 'success' => 'true' ]))->send();
+            $params = Craft::$app->getRequest()->getQueryParams();
+            Craft::$app->getResponse()->redirect($params['successUrl'])->send();
         }
         
+        die();
+    }
+
+    public function actionFailed()
+    {
+        $params = Craft::$app->getRequest()->getQueryParams();
+        Craft::$app->getResponse()->redirect($params['cancelUrl'])->send();
         die();
     }
 }

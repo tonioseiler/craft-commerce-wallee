@@ -1,9 +1,28 @@
+{% js %}
+function openWalleeLightbox(){
+    window.LightboxCheckoutHandler.startPayment(1, function(){
+    console.error('An error occurred during the initialization of the payment lightbox.');
+    });
+}
+{% endjs %}
+
 <div class="wallee-rest-form">
     <div class="wallee-rest-form-loading">Loading...</div>
 </div>
 
-{% js %}
-window.LightboxCheckoutHandler.startPayment(1, function(){
-    console.error('An error occurred during the initialization of the payment lightbox.');
-});
-{% endjs %}
+{% if selectorOpenLightbox is defined %}
+
+    {% js %}
+        document.querySelector('{{ selectorOpenLightbox }}').addEventListener('click', function(event){
+            event.preventDefault();
+            openWalleeLightbox();
+        });
+    {% endjs %}
+
+{% else %}
+
+    {% js %}
+        openWalleeLightbox();
+    {% endjs %}
+
+{% endif %}

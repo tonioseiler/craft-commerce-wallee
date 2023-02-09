@@ -68,6 +68,19 @@ php craft install/plugin craft-commerce-wallee
 4. Select the integration mode you want to use (Lightbox, iFrame or Page) [More details](https://en.wallee.com/developer/checkout).
 5. When you have created the gateway you can see the Webhook URL that you have to use in the Wallee Setup.
 
+```bash
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('commerce/payments/pay') }}
+    {{ hiddenInput('gatewayId', cart.gatewayId) }}
+    {% set params = {
+        successUrl: '/checkout/success?number=' ~ cart.number,
+        cancelUrl: '/checkout/cancel?number=' ~ cart.number,
+        selectorOpenLightbox: '#wallee-lightbox',
+    } %}
+    {{ cart.gateway.getPaymentFormHtml(params)|raw }}
+</form>
+```
 
 ## Support
 

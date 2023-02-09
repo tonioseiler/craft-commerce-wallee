@@ -68,6 +68,8 @@ class Gateway extends BaseGateway
 
     private $transaction;
 
+    private $params;
+
 
     public function __construct()
     {
@@ -113,7 +115,10 @@ class Gateway extends BaseGateway
 
     public function getPaymentFormHtml(array $params): ?string
     {
+        $this->params = $params;
+
         $this->initialize();
+
 
         $view = Craft::$app->getView();
         
@@ -162,8 +167,12 @@ class Gateway extends BaseGateway
         $transactionPayload->setMetaData(['orderId' => $this->order->id]);
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
-        $transactionPayload->setFailedUrl(UrlHelper::siteUrl('/shop/checkout/payment-method'));
-        $transactionPayload->setSuccessUrl(UrlHelper::siteUrl('/actions/commerce-wallee/default/complete'));
+
+        $failedUrl = $this->params['cancelUrl'] ?? "/";
+        $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
+
+        $successUrl = $this->params['successUrl'] ?? "/";
+        $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl]));
 
         return $transactionPayload;
     }
@@ -184,9 +193,7 @@ class Gateway extends BaseGateway
             }else{
                 $transactionService = new \Wallee\Sdk\Service\TransactionIframeService($this->client);
             }
-            $javascriptUrl = $transactionService->javascriptUrl($this->options->spaceId, $this->transaction->getId());
-
-            return $javascriptUrl;
+            return $transactionService->javascriptUrl($this->options->spaceId, $this->transaction->getId());
 
         }catch (\Exception $e){
             return $e->getMessage();
