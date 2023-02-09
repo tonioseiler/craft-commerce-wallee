@@ -145,12 +145,12 @@ class DefaultController extends BaseController
 
     public function actionComplete()
     {
-        $order = Commerce::getInstance()->getCarts()->getCart();
+        $params = Craft::$app->getRequest()->getQueryParams();
+        $order = Commerce::getInstance()->getOrders()->getOrderById($params['orderId']);
         $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
         $transaction->type = TransactionRecord::TYPE_PURCHASE;
         $transaction->status = TransactionRecord::STATUS_SUCCESS;
         if(Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
-            $params = Craft::$app->getRequest()->getQueryParams();
             Craft::$app->getResponse()->redirect($params['successUrl'])->send();
         }
         
