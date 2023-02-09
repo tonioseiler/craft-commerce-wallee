@@ -1,0 +1,102 @@
+{% import "_includes/forms" as forms %}
+
+{% set title = 'Wallee - Settings' %}
+
+
+{% block content %}
+    <div id="fields">
+        <div id="settings">
+
+            {% set siteSettings = settings['orderStatus'] ?? null %}
+
+            {% set orderStatusRows = {
+                fulfill: {
+                    heading: 'Fulfill',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['fulfill']['orderStatus'],
+                    }
+                },
+                completed: {
+                    heading: 'Completed',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['completed']['orderStatus'],
+                    }
+                },
+                failed: {
+                    heading: 'Failed',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['failed']['orderStatus'],
+                    }
+                },
+                confirmed: {
+                    heading: 'Confirmed',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['confirmed']['orderStatus'],
+                    }
+                },
+                processing: {
+                    heading: 'Processing',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['processing']['orderStatus'],
+                    }
+                },
+                pending: {
+                    heading: 'Pending',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['pending']['orderStatus'],
+                    }
+                },
+                authorized: {
+                    heading: 'Authorized',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['authorized']['orderStatus'],
+                    }
+                },
+                decline: {
+                    heading: 'Decline',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['decline']['orderStatus'],
+                    }
+                },
+                voided: {
+                    heading: 'Voided',
+                    orderStatus: {
+                        value: siteSettings ? siteSettings['voided']['orderStatus'],
+                    }
+                }
+            } %}
+
+
+            {% set orderStatus = {"": "-"} %}
+            {% for status in craft.commerce.getOrderStatuses.getAllOrderStatuses %}
+                {% set orderStatus = orderStatus|merge({ (status.id): status.name }) %}
+            {% endfor %}
+
+
+            {{ forms.editableTableField({
+                label: "Order Status"|t('app'),
+                instructions: "Define the Wallee Entities States with the order status"|t('app'),
+                id: 'orderStatus',
+                name: 'orderStatus',
+                cols: {
+                    heading: {
+                        type: 'heading',
+                        heading: "Entity State"|t('app'),
+                        thin: true
+                    },
+                    orderStatus: {
+                        type: 'select',
+                        options: orderStatus,
+                        heading: "Order Status"|t('app'),
+                        code: true
+                    }
+                }|filter,
+                rows: orderStatusRows,
+                fullWidth: true,
+                allowAdd: false,
+                allowDelete: false,
+                allowReorder: false
+            }) }}
+        </div>
+    </div>
+{% endblock %}

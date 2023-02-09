@@ -2,7 +2,7 @@
     "name": "furbo/craft-commerce-wallee",
     "description": "Craft Commerce Payment Gateway for Wallee",
     "type": "craft-plugin",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "keywords": [
         "craft",
         "cms",
@@ -37,8 +37,8 @@
         "handle": "commerce-wallee",
         "developer": "Furbo GmbH",
         "developerUrl": "http://www.furbo.ch",
-        "documentationUrl": "???",
-        "changelogUrl": "???",
+        "documentationUrl": "https://github.com/tonioseiler/craft-commerce-wallee",
+        "changelogUrl": "https://github.com/tonioseiler/craft-commerce-wallee/blob/craft-v4/CHANGELOG.md",
         "components": {
             "commerceWalleeService": "craft\\commerce\\wallee\\services\\CommerceWalleeService"
         },

@@ -13,7 +13,7 @@ function openWalleeLightbox(){
 {% if selectorOpenLightbox is defined %}
 
     {% js %}
-        document.querySelector('{{ selectorOpenLightbox }}').addEventListener('click', function(event){
+        document.querySelector('{{ paymentButtonSelector }}').addEventListener('click', function(event){
             event.preventDefault();
             openWalleeLightbox();
         });

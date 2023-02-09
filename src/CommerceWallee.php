@@ -10,6 +10,7 @@
 
 namespace craft\commerce\wallee;
 
+use craft\commerce\wallee\models\Settings;
 use craft\commerce\wallee\services\CommerceWalleeService as CommerceWalleeServiceService;
 use craft\commerce\wallee\variables\CommerceWalleeVariable;
 
@@ -70,7 +71,7 @@ class CommerceWallee extends Plugin
      *
      * @var bool
      */
-    public bool $hasCpSettings = false;
+    public bool $hasCpSettings = true;
 
     /**
      * Set to `true` if the plugin should have its own section (main nav item) in the control panel.
@@ -170,5 +171,31 @@ class CommerceWallee extends Plugin
 
     // Protected Methods
     // =========================================================================
+
+    /**
+     * Creates and returns the model used to store the plugin’s settings.
+     *
+     * @return \craft\base\Model|null
+     */
+    protected function createSettingsModel(): ?\craft\base\Model
+    {
+        return new Settings();
+    }
+
+    /**
+     * Returns the rendered settings HTML, which will be inserted into the content
+     * block on the settings page.
+     *
+     * @return string The rendered settings HTML
+     */
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->view->renderTemplate(
+            'commerce-wallee/settings',
+            [
+                'settings' => $this->getSettings()
+            ]
+        );
+    }
 
 }

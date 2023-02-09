@@ -76,7 +76,7 @@ php craft install/plugin craft-commerce-wallee
     {% set params = {
         successUrl: '/checkout/success?number=' ~ cart.number,
         cancelUrl: '/checkout/cancel?number=' ~ cart.number,
-        selectorOpenLightbox: '#wallee-lightbox',
+        paymentButtonSelector: '#wallee-lightbox',
     } %}
     {{ cart.gateway.getPaymentFormHtml(params)|raw }}
 </form>
