@@ -10,7 +10,7 @@ function openWalleeLightbox(){
     <div class="wallee-rest-form-loading">Loading...</div>
 </div>
 
-{% if selectorOpenLightbox is defined %}
+{% if paymentButtonSelector is defined %}
 
     {% js %}
         document.querySelector('{{ paymentButtonSelector }}').addEventListener('click', function(event){

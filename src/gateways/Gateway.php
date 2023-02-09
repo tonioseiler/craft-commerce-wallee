@@ -214,12 +214,13 @@ class Gateway extends BaseGateway
         $response = Craft::$app->getResponse();
         $rawData = Craft::$app->getRequest()->getRawBody();
         $response->format = Response::FORMAT_RAW;
-        $response->data = 'ok';
+        //$response->data = 'ok';
         $data = Json::decodeIfJson($rawData);
-
+        $response->data = $data;
         if ($data) {
-            //$response->data = json_encode($data);
-            $options = Commerce::getInstance()->getGateways()->getGatewayById(App::env('WALLEE_GATEWAY_ID'));
+
+            $params = Craft::$app->getRequest()->getQueryParams();
+            $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
             $client = new \Wallee\Sdk\ApiClient($options->userId, $options->apiSecretKey);
             $transaction_service = new \Wallee\Sdk\Service\TransactionService($client);
             $transactionWalle = $transaction_service->read($data['spaceId'], $data['entityId']);
