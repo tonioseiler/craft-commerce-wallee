@@ -228,10 +228,10 @@ class Gateway extends BaseGateway
 
             $state = strtolower($transactionWalle->getState());
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
-            $orderStatus = intval($settings['orderStatus'][$state]['orderStatus']);
+            $orderStatus = explode(":", $settings['orderStatus'][$state]['orderStatus']);
 
-            if($orderStatus){
-                $order->orderStatusId = $orderStatus;
+            if(count($orderStatus)){
+                $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
                 Craft::$app->getElements()->saveElement($order);
             }

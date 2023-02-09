@@ -69,9 +69,9 @@
 
             {% set orderStatus = {"": "-"} %}
             {% for status in craft.commerce.getOrderStatuses.getAllOrderStatuses %}
-                {% set orderStatus = orderStatus|merge({ (status.id): status.name }) %}
+                {% set kkk = "id:" ~ status.id %}
+                {% set orderStatus = orderStatus|merge({ (kkk) : status.name }) %}
             {% endfor %}
-
 
             {{ forms.editableTableField({
                 label: "Order Status"|t('app'),
