@@ -237,7 +237,7 @@ class Gateway extends BaseGateway
                 if(!Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
                     $response->data = "not saved transaction";
                 }else{
-                    $response->data = "ok";
+                    $response->data =  $data;
                 }
             }catch (\Exception $e){
                 $response->data = $e->getMessage();
