@@ -1,9 +1,9 @@
 <img src="resources/img/wallee.png" width="100" height="100">
 
-<h1 align="left">Wallee for Craft Commerce</h1>
-<p>This plugin provides a <a href="https://wallee.com/">Wallee</a> integration for <a href="https://craftcms.com/commerce">Craft Commerce</a>.</p>
+<h1 align="left">Wallee & Postfinance</h1>
+<p>This plugin provides a <a href="https://wallee.com/">Wallee</a> or <a href="https://www.postfinance.ch/de/unternehmen/produkte/einkassieren/omnichannel/postfinance-checkout-flex.html">Postfinance Flex</a> integration for <a href="https://craftcms.com/commerce">Craft Commerce</a>.</p>
 
-Add Wallee as a payment gateway in your craft commerce installation. Wallee allows configuration of many payment methods such as:
+Add Wallee/Postfinance as a payment gateway in your craft commerce installation. The plugin allows configuration of many payment methods such as:
 * Credit Cards
 * Postfinance
 * Twint
@@ -20,6 +20,7 @@ Choose between lightbox, iframe and fullpage integration mode.
 
 Packages availabel for Craft 3 and 4.
 
+Wallee status changes can be mapped dynamically to craft commerce order status.
 
 ## Requirements
 
@@ -51,13 +52,14 @@ php craft install/plugin craft-commerce-wallee
 
 ## Wallee Setup
 
-1. Create a new account at [Wallee](https://app-wallee.com/signup)
+1. Create a new account at [Wallee](https://app-wallee.com/signup) or [Postfinance](https://www.postfinance.ch/de/unternehmen/produkte/einkassieren/omnichannel/postfinance-checkout-flex/postfinance-checkout-flex-registrieren.html)
 2. Go to Space from the left menu and create a new Space and copy the Space ID.
 3. In Account details, create a new Application User and Copy the API Key and API Secret in some safe place.
 4. Go to the new Application User and add the Role "Account Admin" in the Roles section.
 5. Go to your Space > Configuration > Processors and Configure Processor to add the payment methods you want to use  (Paypal, Twint, etc).
 6. Go to  Webhooks > URL Tab and create webhook URL. Add the URL of your website (you can copy from the Craft when you have created the gateway).
-7. Go to Webhooks > Listener Tab and create webhook Listener. In Entity select "Transaction Completion" and in Entity State select "Completed". In URL select the webhook URL you have created in the previous step.
+7. Go to Webhooks > Listener Tab and create webhook Listener. In Entity select "Transaction" and in Entity State select all states. In URL select the webhook URL you have created in the previous step.
+8. Go to the plugin setting in the craf backend and map the Wallee/Postfinance status to the order status.
 
 
 ## Craft Setup
