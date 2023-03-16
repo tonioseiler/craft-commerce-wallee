@@ -1,4 +1,4 @@
-<img src="resources/img/wallee.png" width="100" height="100">
+<img src="resources/img/wallee-pf.png" width="100" height="100">
 
 <h1 align="left">Wallee & Postfinance</h1>
 <p>This plugin provides a <a href="https://wallee.com/">Wallee</a> or <a href="https://www.postfinance.ch/de/unternehmen/produkte/einkassieren/omnichannel/postfinance-checkout-flex.html">Postfinance Flex</a> integration for <a href="https://craftcms.com/commerce">Craft Commerce</a>.</p>
