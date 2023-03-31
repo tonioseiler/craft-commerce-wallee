@@ -58,7 +58,7 @@ class CheckoutResponse implements RequestResponseInterface
         return "";
     }
 
-    public function getData()
+    public function getData(): void
     {
         // TODO: Implement getData() method.
     }
@@ -68,7 +68,7 @@ class CheckoutResponse implements RequestResponseInterface
         return "";
     }
 
-    public function redirect()
+    public function redirect(): void
     {
         // TODO: Implement redirect() method.
     }
