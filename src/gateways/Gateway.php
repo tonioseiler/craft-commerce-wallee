@@ -157,6 +157,26 @@ class Gateway extends BaseGateway
             $lineItems[] = $lineItem;
         }
 
+        if(!is_null($this->order->totalDiscount)) {
+            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+            $lineItem->setName('Discount');
+            $lineItem->setUniqueId(uniqid());
+            $lineItem->setQuantity(1);
+            $lineItem->setAmountIncludingTax($this->order->totalDiscount);
+            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
+            $lineItems[] = $lineItem;
+        }
+
+        if(!is_null($this->order->totalShippingCost)) {
+            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+            $lineItem->setName('Discount');
+            $lineItem->setUniqueId(uniqid());
+            $lineItem->setQuantity(1);
+            $lineItem->setAmountIncludingTax($this->order->totalShippingCost);
+            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
+            $lineItems[] = $lineItem;
+        }
+
         $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
         $transactionPayload->setCurrency('CHF');
         $transactionPayload->setMetaData(['orderId' => $this->order->id]);

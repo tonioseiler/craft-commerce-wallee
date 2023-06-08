@@ -2,7 +2,7 @@
     "name": "furbo/craft-commerce-wallee",
     "description": "Craft Commerce Payment Gateway for Wallee",
     "type": "craft-plugin",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "keywords": [
         "craft",
         "cms",
