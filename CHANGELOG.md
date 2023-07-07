@@ -1,5 +1,11 @@
 # Commerce wallee Changelog
 
+## 2.2.0 - 2023-07-07
+Iframe: js bug
+
+## 2.2.0 - 2023-06-14
+Added discount and delivery support.
+
 ## 2.1.0 - 2023-03-14
 Added postfinance support.
 
