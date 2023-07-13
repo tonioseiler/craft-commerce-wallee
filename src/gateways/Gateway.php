@@ -156,7 +156,7 @@ class Gateway extends BaseGateway
             $lineItem->setUniqueId($item->id);
             $lineItem->setSku($item->getSku());
             $lineItem->setQuantity($item->qty);
-            $lineItem->setAmountIncludingTax($item->getSubtotal());
+            $lineItem->setAmountIncludingTax(round($item->getSubtotal(), 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
             $lineItems[] = $lineItem;
         }
@@ -165,7 +165,7 @@ class Gateway extends BaseGateway
             $lineItem->setName('Discount');
             $lineItem->setUniqueId(uniqid());
             $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax($this->order->totalDiscount);
+            $lineItem->setAmountIncludingTax(round($this->order->totalDiscount, 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
             $lineItems[] = $lineItem;
         }
@@ -175,7 +175,7 @@ class Gateway extends BaseGateway
             $lineItem->setName('Discount');
             $lineItem->setUniqueId(uniqid());
             $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax($this->order->totalShippingCost);
+            $lineItem->setAmountIncludingTax(round($this->order->totalShippingCost, 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
             $lineItems[] = $lineItem;
         }

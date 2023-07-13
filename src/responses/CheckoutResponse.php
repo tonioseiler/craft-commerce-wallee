@@ -58,7 +58,7 @@ class CheckoutResponse implements RequestResponseInterface
         return "";
     }
 
-    public function getData(): void
+    public function getData(): mixed
     {
         // TODO: Implement getData() method.
     }
