@@ -74,25 +74,25 @@
             {% endfor %}
 
             {{ forms.editableTableField({
-                label: "Order Status"|t('app'),
-                instructions: "Define the Wallee Entities States with the order status"|t('app'),
+                label: "Status"|t('app'),
+                instructions: "Map payment states to order states"|t('app'),
                 id: 'orderStatus',
                 name: 'orderStatus',
                 cols: {
                     heading: {
                         type: 'heading',
-                        heading: "Entity State"|t('app'),
+                        heading: "Wallee Payment State"|t('app'),
                         thin: true
                     },
                     orderStatus: {
                         type: 'select',
                         options: orderStatus,
-                        heading: "Order Status"|t('app'),
+                        heading: "Craft Order State"|t('app'),
                         code: true
                     }
                 }|filter,
                 rows: orderStatusRows,
-                fullWidth: true,
+                fullWidth: false,
                 allowAdd: false,
                 allowDelete: false,
                 allowReorder: false
