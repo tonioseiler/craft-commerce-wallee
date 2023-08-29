@@ -78,7 +78,9 @@ class Gateway extends BaseGateway
     }
 
     private function initialize(){
-        $this->order = Commerce::getInstance()->getCarts()->getCart();
+        if($this->order == null){
+            $this->order = Commerce::getInstance()->getCarts()->getCart();
+        }
 
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
@@ -316,9 +318,35 @@ class Gateway extends BaseGateway
 
     public function refund(Transaction $transaction): RequestResponseInterface
     {
-        dd(CommerceWallee::getInstance()->getWalleeService()->refund(intval($transaction->reference), $transaction->order));
-        dd($transaction->reference);
-        dd($transaction->order);
+
+        $this->order = $transaction->order;
+
+
+
+        $transaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
+
+        $amount = $transaction->getAuthorizationAmount();
+
+
+        $this->initialize();
+
+        //create a wallee transaction to refund
+        $refund = new \Wallee\Sdk\Model\RefundCreate();
+        $refund->setAmount($amount);
+        $refund->setTransaction($transaction->getId());
+        $refund->setType(\Wallee\Sdk\Model\RefundType::MERCHANT_INITIATED_ONLINE);
+        $refund->setExternalId(uniqid());
+
+
+        $refundService = new \Wallee\Sdk\Service\RefundService($this->client);
+        $refund = $refundService->refund($this->options->spaceId, $refund);
+
+        if($refund){
+            return new CheckoutResponse();
+        }
+
+        return false;
+
     }
 
     public function supportsAuthorize(): bool

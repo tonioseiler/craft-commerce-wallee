@@ -87,16 +87,38 @@ class CommerceWalleeService extends Component
         return null;
     }
 
-    public function getTransactionById(int $transactionId): ?Transaction
+    public function getTransaction($reference, Order $order)
     {
+
+        $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
+        $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
+
+        $entityQueryFilter = new EntityQueryFilter([
+            'field_name' => 'merchantReference',
+            'value' => $reference,
+            'type' => EntityQueryFilterType::LEAF,
+            'operator' => CriteriaOperator::EQUALS
+        ]);
+
+        $query = new EntityQuery([
+            'filter' => $entityQueryFilter,
+            'number_of_entities' => 1,
+            'starting_entity' => 0
+        ]);
+
+        $result = $client->getTransactionService()->search($gateway->spaceId, $query);
+        if(count($result) > 0) {
+            return $result[0];
+        }
+
         return null;
     }
 
-    public function refund(int $transactionId, Order $order): bool
+    public function refund(Order $order): bool
     {
-        $transaction = $this->getTransactionByOrder($order);
+        $transaction = $this->getTransactionById($order);
 
-
+        dd($transaction);
 
 
         return false;
