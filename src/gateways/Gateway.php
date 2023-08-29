@@ -15,6 +15,7 @@ use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\payments\OffsitePaymentForm;
 use craft\commerce\models\PaymentSource;
 use craft\commerce\models\Transaction;
+use craft\commerce\wallee\CommerceWallee;
 use craft\commerce\wallee\CommerceWalleeBundle;
 use craft\commerce\services\Transactions;
 use craft\commerce\Plugin;
@@ -73,15 +74,17 @@ class Gateway extends BaseGateway
 
     public function __construct()
     {
-        
+
     }
 
     private function initialize(){
         $this->order = Commerce::getInstance()->getCarts()->getCart();
+
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
         $transactionPayload = $this->createOrder();
         $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
+
     }
 
     public static function displayName(): string
@@ -98,6 +101,7 @@ class Gateway extends BaseGateway
 
     public function completeAuthorize(Transaction $transaction): RequestResponseInterface
     {
+        dd("completeAuthorize");
         $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
         $completeRequest = $this->prepareCompleteAuthorizeRequest($request);
 
@@ -106,6 +110,7 @@ class Gateway extends BaseGateway
 
     public function completePurchase(Transaction $transaction): RequestResponseInterface
     {
+        dd("completePurchase");
         $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
         $completeRequest = $this->prepareCompletePurchaseRequest($request);
 
@@ -279,11 +284,13 @@ class Gateway extends BaseGateway
 
     public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
+        dd("authorize");
         // TODO: Implement authorize() method.
     }
 
     public function capture(Transaction $transaction, string $reference): RequestResponseInterface
     {
+        dd("capture");
         // TODO: Implement capture() method.
     }
 
@@ -309,7 +316,9 @@ class Gateway extends BaseGateway
 
     public function refund(Transaction $transaction): RequestResponseInterface
     {
-
+        dd(CommerceWallee::getInstance()->getWalleeService()->refund(intval($transaction->reference), $transaction->order));
+        dd($transaction->reference);
+        dd($transaction->order);
     }
 
     public function supportsAuthorize(): bool
@@ -329,7 +338,7 @@ class Gateway extends BaseGateway
 
     public function supportsCompletePurchase(): bool
     {
-        return true;
+        return false;
     }
 
     public function supportsPaymentSources(): bool
@@ -339,12 +348,12 @@ class Gateway extends BaseGateway
 
     public function supportsPurchase(): bool
     {
-        return true;
+        return false;
     }
 
     public function supportsRefund(): bool
     {
-        return false;
+        return true;
     }
 
     public function supportsPartialRefund(): bool

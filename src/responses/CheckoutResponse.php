@@ -50,7 +50,7 @@ class CheckoutResponse implements RequestResponseInterface
 
     public function getTransactionReference(): string
     {
-        return "";
+        return "111111";
     }
 
     public function getCode(): string

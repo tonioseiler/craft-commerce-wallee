@@ -13,6 +13,7 @@ namespace craft\commerce\wallee\controllers;
 use craft\commerce\wallee\CommerceWallee;
 
 use Craft;
+use craft\helpers\Json;
 use craft\web\Controller as BaseController;
 use craft\commerce\Plugin as Commerce;
 use yii\web\Response;
@@ -146,10 +147,21 @@ class DefaultController extends BaseController
     public function actionComplete()
     {
         $params = Craft::$app->getRequest()->getQueryParams();
-        $order = Commerce::getInstance()->getOrders()->getOrderById($params['orderId']);
+        $orderId = $params['orderId'];
+
+        $order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
+
+        $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order);
+
+
         $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
         $transaction->type = TransactionRecord::TYPE_PURCHASE;
         $transaction->status = TransactionRecord::STATUS_SUCCESS;
+        if($walleeTransaction) {
+            $transaction->response = $walleeTransaction->__toString();
+            $transaction->reference = $walleeTransaction->getId();
+        }
+
         if(Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
             Craft::$app->getResponse()->redirect($params['successUrl'])->send();
         }

@@ -78,11 +78,13 @@ php craft install/plugin craft-commerce-wallee
     {% set params = {
         successUrl: '/checkout/success?number=' ~ cart.number,
         cancelUrl: '/checkout/cancel?number=' ~ cart.number,
-        paymentButtonSelector: '#wallee-lightbox',
+        paymentButtonSelector: '#wallee-lightbox', 
     } %}
     {{ cart.gateway.getPaymentFormHtml(params)|raw }}
 </form>
 ```
+
+The parameter paymentButtonSelector: '#wallee-lightbox', is optional and only neeeded if you want to open the lightbox when you click on a button. If you don't use this parameter the lightbox will open automatically when the page is loaded. It's not required for the iframe and page integration.
 
 ## Support
 

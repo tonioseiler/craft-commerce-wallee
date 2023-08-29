@@ -11,6 +11,8 @@
 namespace craft\commerce\wallee;
 
 use craft\commerce\wallee\models\Settings;
+use craft\commerce\wallee\plugin\Services;
+use craft\commerce\wallee\services\CommerceWalleeService;
 use craft\commerce\wallee\services\CommerceWalleeService as CommerceWalleeServiceService;
 use craft\commerce\wallee\variables\CommerceWalleeVariable;
 
@@ -45,6 +47,9 @@ use yii\base\Event;
  */
 class CommerceWallee extends Plugin
 {
+
+    use Services;
+
     // Static Properties
     // =========================================================================
 
@@ -97,6 +102,8 @@ class CommerceWallee extends Plugin
     public function init()
     {
         parent::init();
+
+
         // Register our site routes
         Event::on(
             UrlManager::class,
@@ -197,5 +204,7 @@ class CommerceWallee extends Plugin
             ]
         );
     }
+
+
 
 }
