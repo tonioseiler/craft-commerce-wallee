@@ -10,6 +10,8 @@
 
 namespace craft\commerce\wallee;
 
+use craft\commerce\elements\Order;
+use craft\commerce\Plugin as Commerce;
 use craft\commerce\wallee\models\Settings;
 use craft\commerce\wallee\plugin\Services;
 use craft\commerce\wallee\services\CommerceWalleeService;
@@ -18,6 +20,8 @@ use craft\commerce\wallee\variables\CommerceWalleeVariable;
 
 use Craft;
 use craft\base\Plugin;
+use craft\events\RegisterElementSourcesEvent;
+use craft\events\RegisterElementTableAttributesEvent;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\web\UrlManager;
@@ -140,6 +144,51 @@ class CommerceWallee extends Plugin
             function (PluginEvent $event) {
                 if ($event->plugin === $this) {
                     // We were just installed
+                }
+            }
+        );
+
+      /*  Event::on(
+            Order::class,
+            Order::EVENT_REGISTER_SOURCES,
+            function (RegisterElementSourcesEvent $event){
+                $event->sources[] = [
+                    'key' => 'wallee',
+                    'label' => 'Wallee',
+                    'criteria' => [
+                        'gatewayId' => 2
+                    ]
+                ];
+            }
+        );*/
+
+        Event::on(
+            Order::class,
+            Order::EVENT_REGISTER_TABLE_ATTRIBUTES,
+            function (RegisterElementTableAttributesEvent $event){
+                $event->tableAttributes['walleeTransactionId'] = [
+                    'label' => 'Transactions'
+                ];
+            }
+        );
+
+        // get the wallee transaction id
+        Event::on(
+            Order::class,
+            Order::EVENT_SET_TABLE_ATTRIBUTE_HTML,
+            function (Event $event){
+                if ($event->attribute == 'walleeTransactionId') {
+                    $order = $event->sender;
+                    //get trasactions from order
+                    $transactions = Commerce::getInstance()->getTransactions()->getAllTransactionsByOrderId($order->id);
+                    $references = [];
+                    foreach ($transactions as $transaction) {
+                        if($transaction->reference) {
+                            $references[] = "<div>" . $transaction->reference . " - <span class='transaction-status transaction-status-{$transaction->status}'>" . $transaction->status . "</span></div>";
+                        }
+                    }
+                    $event->html = implode('', $references);
+
                 }
             }
         );

@@ -86,6 +86,11 @@ php craft install/plugin craft-commerce-wallee
 
 The parameter paymentButtonSelector: '#wallee-lightbox', is optional and only neeeded if you want to open the lightbox when you click on a button. If you don't use this parameter the lightbox will open automatically when the page is loaded. It's not required for the iframe and page integration.
 
+### How can I show the Wallee transactions id in the orders list in the craft backend?
+
+1. Go to Commerce > Orders > Click on the cog icon > Customize Sources.
+2. In the "Default Table Columns" add the column "Transactions" and save.
+
 ## Support
 
 If you have any issues with this plugin, please [create an issue](https://github.com/tonioseiler/craft-commerce-wallee/issues) on GitHub or contact us at [Furbo](mailto:support@furbo.ch).
