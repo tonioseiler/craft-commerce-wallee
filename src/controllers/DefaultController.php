@@ -118,7 +118,7 @@ class DefaultController extends BaseController
             }
 
             $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
-            $transactionPayload->setCurrency('CHF');
+            $transactionPayload->setCurrency($order->paymentCurrency);
             $transactionPayload->setMetaData(['orderId' => $order->id]);
             $transactionPayload->setLineItems($lineItems);
             $transactionPayload->setAutoConfirmationEnabled(true);
