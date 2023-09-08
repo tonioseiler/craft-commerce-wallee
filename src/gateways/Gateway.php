@@ -188,7 +188,7 @@ class Gateway extends BaseGateway
         }
 
         $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
-        $transactionPayload->setCurrency($order->paymentCurrency);
+        $transactionPayload->setCurrency($this->order->paymentCurrency);
         $transactionPayload->setMetaData(['orderId' => $this->order->id]);
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
