@@ -83,9 +83,11 @@ class Gateway extends BaseGateway
         }
 
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
-        $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
-        $transactionPayload = $this->createOrder();
-        $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
+        if (property_exists($this->options, 'userId')) {
+            $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
+            $transactionPayload = $this->createOrder();
+            $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
+        }
 
     }
 
