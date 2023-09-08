@@ -1,6 +1,9 @@
 # Commerce wallee Changelog
 
-## 2.2.6 - 2023-07-07
+
+## 2.2.8 - 2023-09-08
+ - Typo fixed
+## 2.2.6 - 2023-09-08
  - Bug with label of shipping costs in wallee backend fixed
  - Fix webhook error handling for non existing order ids
  - Send correct currency to wallee
