@@ -250,7 +250,7 @@ class Gateway extends BaseGateway
             $metadata = $transactionWalle->getMetaData();
 
             $orderId = (int)$metadata["orderId"];
-            $order = Order::findOne($orderId);
+            $order = Order::findOrFail($orderId);
 
             $state = strtolower($transactionWalle->getState());
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
