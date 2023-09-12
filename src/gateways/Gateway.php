@@ -247,14 +247,14 @@ class Gateway extends BaseGateway
             $params = Craft::$app->getRequest()->getQueryParams();
             $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
             $client = new \Wallee\Sdk\ApiClient($options->userId, $options->apiSecretKey);
-            $transaction_service = new \Wallee\Sdk\Service\TransactionService($client);
-            $transactionWalle = $transaction_service->read($data['spaceId'], $data['entityId']);
-            $metadata = $transactionWalle->getMetaData();
+            $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
+            $transactionWallee = $transactionService->read($data['spaceId'], $data['entityId']);
+            $metadata = $transactionWallee->getMetaData();
 
             $orderId = (int)$metadata["orderId"];
             $order = Order::findOrFail($orderId);
 
-            $state = strtolower($transactionWalle->getState());
+            $state = strtolower($transactionWallee->getState());
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][$state]['orderStatus']);
 
@@ -274,7 +274,7 @@ class Gateway extends BaseGateway
                 if(!Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
                     $response->data = "not saved transaction";
                 }else{
-                    $response->data = json_encode($metadata) . $transactionWalle->getState();
+                    $response->data = json_encode($metadata) . $transactionWallee->getState();
                 }
             }catch (\Exception $e){
                 $response->data = $e->getMessage();
@@ -322,8 +322,6 @@ class Gateway extends BaseGateway
     {
 
         $this->order = $transaction->order;
-
-
 
         $transaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
 

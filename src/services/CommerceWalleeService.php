@@ -47,7 +47,7 @@ class CommerceWalleeService extends Component
         return new ApiClient($userId, $apiSecretKey);
     }
 
-    public function getTransactionByOrder(Order $order): ?Transaction
+    public function getTransactionByOrder(Order $order, $transactionStates): ?Transaction
     {
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
@@ -58,8 +58,6 @@ class CommerceWalleeService extends Component
            'type' => EntityQueryFilterType::LEAF,
            'operator' => CriteriaOperator::GREATER_THAN_OR_EQUAL
         ]);
-
-
 
         $hasMoreEntities = true;
         $startingEntity = 0;
@@ -73,7 +71,7 @@ class CommerceWalleeService extends Component
             $result = $client->getTransactionService()->search($gateway->spaceId, $query);
 
             foreach ($result as $entity) {
-                if($entity->getMetaData() != null && $entity->getMetaData()['orderId'] == $order->getId()) {
+                if($entity->getMetaData() != null && $entity->getMetaData()['orderId'] == $order->getId() && in_array($entity->getState(), $transactionStates)) {
                     return $entity;
                 }
             }
@@ -117,9 +115,6 @@ class CommerceWalleeService extends Component
     public function refund(Order $order): bool
     {
         $transaction = $this->getTransactionById($order);
-
-        dd($transaction);
-
 
         return false;
     }

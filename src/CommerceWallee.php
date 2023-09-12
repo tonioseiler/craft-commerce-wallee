@@ -109,22 +109,22 @@ class CommerceWallee extends Plugin
 
 
         // Register our site routes
-        Event::on(
+        /*Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
                 $event->rules['siteActionTrigger1'] = 'commerce-wallee/default';
             }
-        );
+        );*/
 
         // Register our CP routes
-        Event::on(
+        /*Event::on(
             UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
                 $event->rules['cpActionTrigger1'] = 'commerce-wallee/default/do-something';
             }
-        );
+        );*/
 
         // Register our variables
         Event::on(

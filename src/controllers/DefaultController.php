@@ -151,8 +151,7 @@ class DefaultController extends BaseController
 
         $order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
 
-        $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order);
-
+        $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order, [\Wallee\Sdk\Model\TransactionState::FULFILL]);
 
         $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
         $transaction->type = TransactionRecord::TYPE_PURCHASE;
