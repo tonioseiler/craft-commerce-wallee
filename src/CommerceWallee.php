@@ -179,7 +179,7 @@ class CommerceWallee extends Plugin
             function (Event $event){
                 if ($event->attribute == 'walleeTransactionId') {
                     $order = $event->sender;
-                    //get trasactions from order
+                    //get transactions from order
                     $transactions = Commerce::getInstance()->getTransactions()->getAllTransactionsByOrderId($order->id);
                     $references = [];
                     foreach ($transactions as $transaction) {
