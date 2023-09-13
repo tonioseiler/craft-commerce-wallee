@@ -34,6 +34,7 @@ use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
+use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
 use craft\commerce\wallee\controllers;
 use craft\commerce\wallee\controllers\DefaultController;
@@ -252,7 +253,10 @@ class Gateway extends BaseGateway
             $metadata = $transactionWallee->getMetaData();
 
             $orderId = (int)$metadata["orderId"];
-            $order = Order::findOrFail($orderId);
+            $order = Order::findOne($orderId);
+
+            if (empty($order))
+                throw new NotFoundHttpException('Order not found.');
 
             $state = strtolower($transactionWallee->getState());
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
