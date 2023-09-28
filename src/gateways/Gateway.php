@@ -72,7 +72,10 @@ class Gateway extends BaseGateway
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         if (property_exists($this->options, 'userId')) {
             $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
-            $transactionPayload = $this->createOrder();
+            
+            $successUrl = $this->params['successUrl'] ?? "/";
+            $failedUrl = $this->params['cancelUrl'] ?? "/";
+            $transactionPayload = CommerceWallee::getInstance()->getWalleeService()->createWalleeOrder($this->order, $successUrl, $failedUrl);
             $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
         }
 
@@ -142,54 +145,6 @@ class Gateway extends BaseGateway
         $view->setTemplateMode($previousMode);
 
         return $html;
-    }
-
-    
-    private function createOrder(){
-        $lineItems = [];
-        foreach ($this->order->lineItems as $item) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName($item->getDescription());
-            $lineItem->setUniqueId($item->id);
-            $lineItem->setSku($item->getSku());
-            $lineItem->setQuantity($item->qty);
-            $lineItem->setAmountIncludingTax(round($item->getSubtotal(), 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
-            $lineItems[] = $lineItem;
-        }
-        if(!is_null($this->order->totalDiscount)) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName('Discount');
-            $lineItem->setUniqueId(uniqid());
-            $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax(round($this->order->totalDiscount, 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
-            $lineItems[] = $lineItem;
-        }
-
-        if(!is_null($this->order->totalShippingCost)) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName('Shipping');
-            $lineItem->setUniqueId(uniqid());
-            $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax(round($this->order->totalShippingCost, 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
-            $lineItems[] = $lineItem;
-        }
-
-        $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
-        $transactionPayload->setCurrency($this->order->paymentCurrency);
-        $transactionPayload->setMetaData(['orderId' => $this->order->id]);
-        $transactionPayload->setLineItems($lineItems);
-        $transactionPayload->setAutoConfirmationEnabled(true);
-
-        $failedUrl = $this->params['cancelUrl'] ?? "/";
-        $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
-
-        $successUrl = $this->params['successUrl'] ?? "/";
-        $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $this->order->id]));
-
-        return $transactionPayload;
     }
 
     private function fetchPaymentMethods(){

@@ -104,31 +104,10 @@ class DefaultController extends BaseController
             $transactionLightboxService = new \Wallee\Sdk\Service\TransactionLightboxService($client);
 
             $order = Commerce::getInstance()->getCarts()->getCart();
-            
-            $lineItems = [];
-            foreach ($order->lineItems as $item) {
-                $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-                $lineItem->setName($item->getDescription());
-                $lineItem->setUniqueId($item->id);
-                $lineItem->setSku($item->getSku());
-                $lineItem->setQuantity($item->qty);
-                $lineItem->setAmountIncludingTax($item->getSubtotal());
-                $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
-                $lineItems[] = $lineItem;
-            }
-
-            $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
-            $transactionPayload->setCurrency($order->paymentCurrency);
-            $transactionPayload->setMetaData(['orderId' => $order->id]);
-            $transactionPayload->setLineItems($lineItems);
-            $transactionPayload->setAutoConfirmationEnabled(true);
-            $transactionPayload->setFailedUrl(str_replace(":orderId", $order->id, App::env('WALLEE_PAYMENT_ERROR')));
-            $transactionPayload->setSuccessUrl(str_replace(":orderId", $order->id, App::env('WALLEE_PAYMENT_SUCCESS')));
-
+            $transactionPayload = CommerceWallee::getInstance()->getWalleeService()->createWalleeOrder($order);
             $transaction = $client->getTransactionService()->create($options->spaceId, $transactionPayload);
 
             $javascriptUrl = $transactionLightboxService->javascriptUrl($options->spaceId, $transaction->getId());
-
 
             return $this->asJson([
                 'success' => true,

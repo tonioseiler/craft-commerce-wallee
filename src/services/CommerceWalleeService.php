@@ -13,11 +13,13 @@ namespace craft\commerce\wallee\services;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as Commerce;
 use craft\commerce\wallee\CommerceWallee;
+use craft\helpers\UrlHelper;
+use craft\base\Component;
 
 use Craft;
-use craft\base\Component;
 use Wallee\Sdk\Model\EntityQuery;
 use Wallee\Sdk\Model\Transaction;
+use Wallee\Sdk\Model\TransactionCreate;
 use Wallee\Sdk\ApiClient;
 use Wallee\Sdk\Service\TransactionService;
 use Wallee\Sdk\Model\EntityQueryFilterType;
@@ -87,7 +89,6 @@ class CommerceWalleeService extends Component
 
     public function getTransaction($reference, Order $order)
     {
-
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
 
@@ -118,4 +119,49 @@ class CommerceWalleeService extends Component
 
         return false;
     }
+
+    public function createWalleeOrder(Order $order, $successUrl = '/', $failedUrl = '/'): TransactionCreate
+    {
+        $lineItems = [];
+        foreach ($order->lineItems as $item) {
+            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+            $lineItem->setName($item->getDescription());
+            $lineItem->setUniqueId($item->id);
+            $lineItem->setSku($item->getSku());
+            $lineItem->setQuantity($item->qty);
+            $lineItem->setAmountIncludingTax(round($item->getSubtotal(), 2));
+            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
+            $lineItems[] = $lineItem;
+        }
+        if(!is_null($order->totalDiscount)) {
+            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+            $lineItem->setName('Discount');
+            $lineItem->setUniqueId(uniqid());
+            $lineItem->setQuantity(1);
+            $lineItem->setAmountIncludingTax(round($order->totalDiscount, 2));
+            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
+            $lineItems[] = $lineItem;
+        }
+
+        if(!is_null($order->totalShippingCost)) {
+            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+            $lineItem->setName('Shipping');
+            $lineItem->setUniqueId(uniqid());
+            $lineItem->setQuantity(1);
+            $lineItem->setAmountIncludingTax(round($order->totalShippingCost, 2));
+            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
+            $lineItems[] = $lineItem;
+        }
+
+        $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
+        $transactionPayload->setCurrency($order->paymentCurrency);
+        $transactionPayload->setMetaData(['orderId' => $order->id]);
+        $transactionPayload->setLineItems($lineItems);
+        $transactionPayload->setAutoConfirmationEnabled(true);
+
+        $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
+        $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));
+
+        return $transactionPayload;
+    } 
 }
