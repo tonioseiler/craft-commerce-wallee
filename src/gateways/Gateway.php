@@ -23,6 +23,8 @@ use craft\web\View;
 use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
 
+use Wallee\Sdk\Model\TransactionState;
+
 class Gateway extends BaseGateway
 {
     
@@ -251,114 +253,20 @@ class Gateway extends BaseGateway
 
             $walleeState = $walleeTransaction->getState();
 
-            Craft::info('Walle state: '.$walleeState, 'craft-commerce-wallee');
+            Craft::info('Wallee state: '.$walleeState, 'craft-commerce-wallee');
 
             //map transaction state to order state
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
             if(count($orderStatus)){
+                Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
                 Craft::$app->getElements()->saveElement($order);
             }
 
             $response->data = $order->number;
-
-            //record transaction
-            try {
-                $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
-
-                /* Map the transaction states
-
-                Wallee states (from Wallee\Sdk\Model\TransactionState)
-                //CREATE = 'CREATE';
-                //PENDING = 'PENDING';
-                //CONFIRMED = 'CONFIRMED';
-                //PROCESSING = 'PROCESSING';
-                //FAILED = 'FAILED';
-                //AUTHORIZED = 'AUTHORIZED';
-                //VOIDED = 'VOIDED';
-                //COMPLETED = 'COMPLETED';
-                //FULFILL = 'FULFILL';
-                //DECLINE = 'DECLINE';
-
-                Commerce states (from craft\commerce\model\TransactionRecord)
-                //STATUS_PENDING = 'pending';
-                //STATUS_REDIRECT = 'redirect';
-                //STATUS_PROCESSING = 'processing';
-                //STATUS_SUCCESS = 'success';
-                //STATUS_FAILED = 'failed';
-
-                */
-
-                /* MAP the transaction types
-
-                Wallee types ??? determied from state?
-
-                Commerce Types (from craft\commerce\records\TransactionRecord)
-                // TYPE_AUTHORIZE = 'authorize';
-                // TYPE_CAPTURE = 'capture';
-                // TYPE_PURCHASE = 'purchase';
-                // TYPE_REFUND = 'refund';
-                */
-
-                $state = TransactionRecord::STATUS_PENDING;
-                $type = TransactionRecord::TYPE_CAPTURE;
-
-                if ($walleeState == TransactionState::CREATE) {
-                    $state = TransactionRecord::STATUS_PENDING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::PENDING) {
-                    $state = TransactionRecord::STATUS_PENDING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::CONFIRMED) {
-                    $state = TransactionRecord::STATUS_PROCESSING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::PROCESSING) {
-                    $state = TransactionRecord::STATUS_PROCESSING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::FAILED) {
-                    $state = TransactionRecord::STATUS_FAILED;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::AUTHORIZED) {
-                    $state = TransactionRecord::STATUS_PROCESSING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::VOIDED) {
-                    $state = TransactionRecord::STATUS_FAILED;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::COMPLETED) {
-                    $state = TransactionRecord::STATUS_PROCESSING;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::FULFILL) {
-                    $state = TransactionRecord::STATUS_SUCCESS;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-                elseif ($walleeState == TransactionState::DECLINE) {
-                    $state = TransactionRecord::STATUS_FAILED;
-                    $type = TransactionRecord::TYPE_CAPTURE;
-                }
-
-                $transaction->status = $state;
-                $transaction->type = $type;
-
-                $transaction->response = $data;
-                if(!Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
-                    $response->data = "transaction could not be saved";
-                }else{
-                    $response->data = json_encode($metadata) . $walleeTransaction->getState();
-                }
-            }catch (\Exception $e){
-                $response->data = $e->getMessage();
-            }
 
         }
         return $response;
@@ -401,24 +309,22 @@ class Gateway extends BaseGateway
     public function refund(Transaction $transaction): RequestResponseInterface
     {
 
-        Craft::info('Refund transaction: '.$transaction->getId(), 'craft-commerce-wallee');
-
         $this->order = $transaction->order;
+        
+        $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
+        
+        Craft::info('Refund transaction: '.$walleeTransaction->getId(), 'craft-commerce-wallee');
 
-        $transaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
-
-        $amount = $transaction->getAuthorizationAmount();
-
+        $amount = $walleeTransaction->getAuthorizationAmount();
 
         $this->initialize();
 
         //create a wallee transaction to refund
         $refund = new \Wallee\Sdk\Model\RefundCreate();
         $refund->setAmount($amount);
-        $refund->setTransaction($transaction->getId());
+        $refund->setTransaction($walleeTransaction->getId());
         $refund->setType(\Wallee\Sdk\Model\RefundType::MERCHANT_INITIATED_ONLINE);
         $refund->setExternalId(uniqid());
-
 
         $refundService = new \Wallee\Sdk\Service\RefundService($this->client);
         $refund = $refundService->refund($this->options->spaceId, $refund);
