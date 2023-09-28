@@ -352,7 +352,7 @@ class Gateway extends BaseGateway
 
                 $transaction->response = $data;
                 if(!Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
-                    $response->data = "not saved transaction";
+                    $response->data = "transaction could not be saved";
                 }else{
                     $response->data = json_encode($metadata) . $walleeTransaction->getState();
                 }

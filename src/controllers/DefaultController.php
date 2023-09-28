@@ -153,16 +153,21 @@ class DefaultController extends BaseController
 
         $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order, [\Wallee\Sdk\Model\TransactionState::FULFILL]);
 
-        $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
-        $transaction->type = TransactionRecord::TYPE_PURCHASE;
-        $transaction->status = TransactionRecord::STATUS_SUCCESS;
-        if($walleeTransaction) {
-            $transaction->response = $walleeTransaction->__toString();
-            $transaction->reference = $walleeTransaction->getId();
-        }
+        //record transaction
+        try {
+            $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
+            $transaction->type = TransactionRecord::TYPE_PURCHASE;
+            $transaction->status = TransactionRecord::STATUS_SUCCESS;
+            if($walleeTransaction) {
+                $transaction->response = $walleeTransaction->__toString();
+                $transaction->reference = $walleeTransaction->getId();
+            }
 
-        if(Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
-            Craft::$app->getResponse()->redirect($params['successUrl'])->send();
+            if(Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
+                Craft::$app->getResponse()->redirect($params['successUrl'])->send();
+            }
+        }catch (\Exception $e){
+            Craft::info($e->getMessage(), 'craft-commerce-wallee');
         }
         
         die();
