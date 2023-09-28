@@ -239,18 +239,26 @@ class Gateway extends BaseGateway
 
     public function processWebHook(): WebResponse
     {
+
+        Craft::info('processign webhook', __METHOD__);
+
         $response = Craft::$app->getResponse();
         $rawData = Craft::$app->getRequest()->getRawBody();
+
+        
         $response->format = Response::FORMAT_RAW;
         $data = Json::decodeIfJson($rawData);
+
+        Craft::info('processing webhook. Data: '.json_encode($data), 'craft-commerce-wallee');
+
         if ($data) {
 
             $params = Craft::$app->getRequest()->getQueryParams();
             $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
             $client = new \Wallee\Sdk\ApiClient($options->userId, $options->apiSecretKey);
             $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
-            $transactionWallee = $transactionService->read($data['spaceId'], $data['entityId']);
-            $metadata = $transactionWallee->getMetaData();
+            $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
+            $metadata = $walleeTransaction->getMetaData();
 
             $orderId = (int)$metadata["orderId"];
             $order = Order::findOne($orderId);
@@ -258,9 +266,11 @@ class Gateway extends BaseGateway
             if (empty($order))
                 throw new NotFoundHttpException('Order not found.');
 
-            $state = strtolower($transactionWallee->getState());
+            $walleeState = $walleeTransaction->getState();
+
+            //map transaction state to order state
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
-            $orderStatus = explode(":", $settings['orderStatus'][$state]['orderStatus']);
+            $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
             if(count($orderStatus)){
                 $order->orderStatusId = $orderStatus[1];
@@ -270,23 +280,102 @@ class Gateway extends BaseGateway
 
             $response->data = $order->number;
 
+            //record transaction
             try {
                 $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
-                $transaction->type = TransactionRecord::TYPE_PURCHASE;
-                $transaction->status = TransactionRecord::STATUS_SUCCESS;
+
+                /* Map the transaction states
+
+                Wallee states (from Wallee\Sdk\Model\TransactionState)
+                //CREATE = 'CREATE';
+                //PENDING = 'PENDING';
+                //CONFIRMED = 'CONFIRMED';
+                //PROCESSING = 'PROCESSING';
+                //FAILED = 'FAILED';
+                //AUTHORIZED = 'AUTHORIZED';
+                //VOIDED = 'VOIDED';
+                //COMPLETED = 'COMPLETED';
+                //FULFILL = 'FULFILL';
+                //DECLINE = 'DECLINE';
+
+                Commerce states (from craft\commerce\model\TransactionRecord)
+                //STATUS_PENDING = 'pending';
+                //STATUS_REDIRECT = 'redirect';
+                //STATUS_PROCESSING = 'processing';
+                //STATUS_SUCCESS = 'success';
+                //STATUS_FAILED = 'failed';
+
+                */
+
+                /* MAP the transaction types
+
+                Wallee types ??? determied from state?
+
+                Commerce Types (from craft\commerce\records\TransactionRecord)
+                // TYPE_AUTHORIZE = 'authorize';
+                // TYPE_CAPTURE = 'capture';
+                // TYPE_PURCHASE = 'purchase';
+                // TYPE_REFUND = 'refund';
+                */
+
+                $state = TransactionRecord::STATUS_PENDING;
+                $type = TransactionRecord::TYPE_CAPTURE;
+
+                if ($walleeState == TransactionState::CREATE) {
+                    $state = TransactionRecord::STATUS_PENDING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::PENDING) {
+                    $state = TransactionRecord::STATUS_PENDING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::CONFIRMED) {
+                    $state = TransactionRecord::STATUS_PROCESSING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::PROCESSING) {
+                    $state = TransactionRecord::STATUS_PROCESSING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::FAILED) {
+                    $state = TransactionRecord::STATUS_FAILED;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::AUTHORIZED) {
+                    $state = TransactionRecord::STATUS_PROCESSING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::VOIDED) {
+                    $state = TransactionRecord::STATUS_FAILED;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::COMPLETED) {
+                    $state = TransactionRecord::STATUS_PROCESSING;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::FULFILL) {
+                    $state = TransactionRecord::STATUS_SUCCESS;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+                elseif ($walleeState == TransactionState::DECLINE) {
+                    $state = TransactionRecord::STATUS_FAILED;
+                    $type = TransactionRecord::TYPE_CAPTURE;
+                }
+
+                $transaction->status = $state;
+                $transaction->type = $type;
+
                 $transaction->response = $data;
                 if(!Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true)){
                     $response->data = "not saved transaction";
                 }else{
-                    $response->data = json_encode($metadata) . $transactionWallee->getState();
+                    $response->data = json_encode($metadata) . $walleeTransaction->getState();
                 }
             }catch (\Exception $e){
                 $response->data = $e->getMessage();
             }
 
         }
-
-
         return $response;
     }
 

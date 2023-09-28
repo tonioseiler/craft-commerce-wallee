@@ -15,23 +15,23 @@ use craft\commerce\Plugin as Commerce;
 use craft\commerce\wallee\models\Settings;
 use craft\commerce\wallee\plugin\Services;
 use craft\commerce\wallee\services\CommerceWalleeService;
-use craft\commerce\wallee\services\CommerceWalleeService as CommerceWalleeServiceService;
 use craft\commerce\wallee\variables\CommerceWalleeVariable;
 
 use Craft;
 use craft\base\Plugin;
-use craft\events\RegisterElementSourcesEvent;
 use craft\events\RegisterElementTableAttributesEvent;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
-use craft\web\UrlManager;
 use craft\web\twig\variables\CraftVariable;
-use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\commerce\wallee\gateways\Gateway;
 use craft\commerce\services\Gateways;
 
 use yii\base\Event;
+
+use Monolog\Formatter\LineFormatter;
+use Psr\Log\LogLevel;
+use craft\log\MonologTarget;
 
 /**
  * Craft plugins are very much like little applications in and of themselves. We’ve made
@@ -92,39 +92,11 @@ class CommerceWallee extends Plugin
     // Public Methods
     // =========================================================================
 
-    /**
-     * Set our $plugin static property to this class so that it can be accessed via
-     * CommerceWallee::$plugin
-     *
-     * Called after the plugin class is instantiated; do any one-time initialization
-     * here such as hooks and events.
-     *
-     * If you have a '/vendor/autoload.php' file, it will be loaded for you automatically;
-     * you do not need to load it in your init() method.
-     *
-     */
     public function init()
     {
         parent::init();
 
-
-        // Register our site routes
-        /*Event::on(
-            UrlManager::class,
-            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
-                $event->rules['siteActionTrigger1'] = 'commerce-wallee/default';
-            }
-        );*/
-
-        // Register our CP routes
-        /*Event::on(
-            UrlManager::class,
-            UrlManager::EVENT_REGISTER_CP_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
-                $event->rules['cpActionTrigger1'] = 'commerce-wallee/default/do-something';
-            }
-        );*/
+        $this->registerLogger();
 
         // Register our variables
         Event::on(
@@ -147,20 +119,6 @@ class CommerceWallee extends Plugin
                 }
             }
         );
-
-      /*  Event::on(
-            Order::class,
-            Order::EVENT_REGISTER_SOURCES,
-            function (RegisterElementSourcesEvent $event){
-                $event->sources[] = [
-                    'key' => 'wallee',
-                    'label' => 'Wallee',
-                    'criteria' => [
-                        'gatewayId' => 2
-                    ]
-                ];
-            }
-        );*/
 
         Event::on(
             Order::class,
@@ -197,32 +155,9 @@ class CommerceWallee extends Plugin
             $event->types[] = Gateway::class;
         });
 
-/**
- * Logging in Craft involves using one of the following methods:
- *
- * Craft::trace(): record a message to trace how a piece of code runs. This is mainly for development use.
- * Craft::info(): record a message that conveys some useful information.
- * Craft::warning(): record a warning message that indicates something unexpected has happened.
- * Craft::error(): record a fatal error that should be investigated as soon as possible.
- *
- * Unless `devMode` is on, only Craft::warning() & Craft::error() will log to `craft/storage/logs/web.log`
- *
- * It's recommended that you pass in the magic constant `__METHOD__` as the second parameter, which sets
- * the category to the method (prefixed with the fully qualified class name) where the constant appears.
- *
- * To enable the Yii debug toolbar, go to your user account in the AdminCP and check the
- * [] Show the debug toolbar on the front end & [] Show the debug toolbar on the Control Panel
- *
- * http://www.yiiframework.com/doc-2.0/guide-runtime-logging.html
- */
-        Craft::info(
-            Craft::t(
-                'commerce-wallee',
-                '{name} plugin loaded',
-                ['name' => $this->name]
-            ),
-            __METHOD__
-        );
+
+        Craft::info('commerce wallee plugin loaded', 'craft-commerce-wallee');
+        
     }
 
     // Protected Methods
@@ -254,6 +189,21 @@ class CommerceWallee extends Plugin
         );
     }
 
+    protected function registerLogger()
+    {
+        // Register a custom log target, keeping the format as simple as possible.
+        Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
+            'name' => 'craft-commerce-wallee',
+            'categories' => ['craft-commerce-wallee'],
+            'level' => LogLevel::INFO,
+            'logContext' => false,
+            'allowLineBreaks' => false,
+            'formatter' => new LineFormatter(
+                format: "%datetime% %message%\n",
+                dateFormat: 'Y-m-d H:i:s',
+            ),
+        ]);
+    }
 
 
 }
