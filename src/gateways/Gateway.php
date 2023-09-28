@@ -6,38 +6,22 @@ namespace craft\commerce\wallee\gateways;
 use Craft;
 use craft\commerce\base\Gateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
-use craft\commerce\base\ShippingMethod;
 use craft\commerce\elements\Order;
-use craft\commerce\errors\PaymentException;
-use craft\commerce\helpers\Currency;
-use craft\commerce\models\Address;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\payments\OffsitePaymentForm;
 use craft\commerce\models\PaymentSource;
 use craft\commerce\models\Transaction;
 use craft\commerce\wallee\CommerceWallee;
 use craft\commerce\wallee\CommerceWalleeBundle;
-use craft\commerce\services\Transactions;
-use craft\commerce\Plugin;
 use craft\commerce\Plugin as Commerce;
-use craft\helpers\App;
-use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use craft\web\Response;
 use craft\web\Response as WebResponse;
 use craft\commerce\wallee\responses\CheckoutResponse;
 use craft\web\View;
-use Throwable;
-use Twig\Error\LoaderError;
-use Twig\Error\RuntimeError;
-use Twig\Error\SyntaxError;
-use yii\base\Exception;
-use yii\base\InvalidConfigException;
 use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
-use craft\commerce\wallee\controllers;
-use craft\commerce\wallee\controllers\DefaultController;
 
 class Gateway extends BaseGateway
 {
@@ -106,6 +90,7 @@ class Gateway extends BaseGateway
 
     public function completeAuthorize(Transaction $transaction): RequestResponseInterface
     {
+        Craft::info('completeAuthorize', 'craft-commerce-wallee');
         dd("completeAuthorize");
         $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
         $completeRequest = $this->prepareCompleteAuthorizeRequest($request);
@@ -115,6 +100,7 @@ class Gateway extends BaseGateway
 
     public function completePurchase(Transaction $transaction): RequestResponseInterface
     {
+        Craft::info('completePurchase', 'craft-commerce-wallee');
         dd("completePurchase");
         $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
         $completeRequest = $this->prepareCompletePurchaseRequest($request);
@@ -127,7 +113,6 @@ class Gateway extends BaseGateway
         $this->params = $params;
 
         $this->initialize();
-
 
         $view = Craft::$app->getView();
         
@@ -240,8 +225,6 @@ class Gateway extends BaseGateway
     public function processWebHook(): WebResponse
     {
 
-        Craft::info('processign webhook', __METHOD__);
-
         $response = Craft::$app->getResponse();
         $rawData = Craft::$app->getRequest()->getRawBody();
 
@@ -267,6 +250,8 @@ class Gateway extends BaseGateway
                 throw new NotFoundHttpException('Order not found.');
 
             $walleeState = $walleeTransaction->getState();
+
+            Craft::info('Walle state: '.$walleeState, 'craft-commerce-wallee');
 
             //map transaction state to order state
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
@@ -381,12 +366,14 @@ class Gateway extends BaseGateway
 
     public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
+        Craft::info('Authorize', 'craft-commerce-wallee');
         dd("authorize");
         // TODO: Implement authorize() method.
     }
 
     public function capture(Transaction $transaction, string $reference): RequestResponseInterface
     {
+        Craft::info('Capture', 'craft-commerce-wallee');
         dd("capture");
         // TODO: Implement capture() method.
     }
@@ -413,6 +400,8 @@ class Gateway extends BaseGateway
 
     public function refund(Transaction $transaction): RequestResponseInterface
     {
+
+        Craft::info('Refund transaction: '.$transaction->getId(), 'craft-commerce-wallee');
 
         $this->order = $transaction->order;
 

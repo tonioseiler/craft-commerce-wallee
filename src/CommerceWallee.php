@@ -1,8 +1,8 @@
 <?php
 /**
- * Commerce wallee plugin for Craft CMS 3.x
+ * Commerce wallee plugin for Craft CMS 4.x
  *
- * wallee integration for Craft Commerce 3
+ * wallee integration for Craft Commerce
  *
  * @link      http://www.furbo.ch
  * @copyright Copyright (c) 2021 Furbo GmbH
@@ -155,9 +155,8 @@ class CommerceWallee extends Plugin
             $event->types[] = Gateway::class;
         });
 
+        //Craft::info('commerce wallee plugin loaded', 'craft-commerce-wallee');
 
-        Craft::info('commerce wallee plugin loaded', 'craft-commerce-wallee');
-        
     }
 
     // Protected Methods
