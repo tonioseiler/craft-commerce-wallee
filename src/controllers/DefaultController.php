@@ -126,7 +126,6 @@ class DefaultController extends BaseController
     public function actionComplete()
     {
 
-        
         $params = Craft::$app->getRequest()->getQueryParams();
 
         Craft::info('complete: '.json_encode($params), 'craft-commerce-wallee');

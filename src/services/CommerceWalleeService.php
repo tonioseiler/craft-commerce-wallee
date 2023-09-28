@@ -158,6 +158,7 @@ class CommerceWalleeService extends Component
         $transactionPayload->setMetaData(['orderId' => $order->id]);
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
+        $transactionPayload->setMerchantReference($order->id);
 
         $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
         $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));
