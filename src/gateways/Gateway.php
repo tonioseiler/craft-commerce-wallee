@@ -203,8 +203,11 @@ class Gateway extends BaseGateway
             $orderId = (int)$metadata["orderId"];
             $order = Order::findOne($orderId);
 
-            if (empty($order))
-                throw new NotFoundHttpException('Order not found.');
+            if (empty($order)) {
+                Craft::warning('Order not found: '.json_encode($data), 'craft-commerce-wallee');
+                $response->data = 'Warning: Order not found.';
+                return $response;
+            }
 
             $walleeState = $walleeTransaction->getState();
 
