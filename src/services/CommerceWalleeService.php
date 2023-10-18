@@ -122,6 +122,9 @@ class CommerceWalleeService extends Component
 
     public function createWalleeOrder(Order $order, $successUrl = '/', $failedUrl = '/'): TransactionCreate
     {
+
+        //TODO: get tax config from order (I hope) or from country
+
         $lineItems = [];
         foreach ($order->lineItems as $item) {
             $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
@@ -129,6 +132,7 @@ class CommerceWalleeService extends Component
             $lineItem->setUniqueId($item->id);
             $lineItem->setSku($item->getSku());
             $lineItem->setQuantity($item->qty);
+            //TODO: check from config if included or not
             $lineItem->setAmountIncludingTax(round($item->getSubtotal(), 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
             $lineItems[] = $lineItem;
@@ -138,6 +142,7 @@ class CommerceWalleeService extends Component
             $lineItem->setName('Discount');
             $lineItem->setUniqueId(uniqid());
             $lineItem->setQuantity(1);
+            //TODO: check from config if included or not
             $lineItem->setAmountIncludingTax(round($order->totalDiscount, 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
             $lineItems[] = $lineItem;
@@ -148,10 +153,14 @@ class CommerceWalleeService extends Component
             $lineItem->setName('Shipping');
             $lineItem->setUniqueId(uniqid());
             $lineItem->setQuantity(1);
+            //TODO: check from config if included or not
             $lineItem->setAmountIncludingTax(round($order->totalShippingCost, 2));
             $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
             $lineItems[] = $lineItem;
         }
+
+        //TODO: check if tax needs to be added like shipping cost
+
 
         $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
         $transactionPayload->setCurrency($order->paymentCurrency);
