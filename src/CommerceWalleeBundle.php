@@ -13,8 +13,12 @@ class CommerceWalleeBundle extends AssetBundle
     {
         $this->sourcePath = '@craft/commerce/wallee/resources';
 
-        $this->js = [
+        /*$this->js = [
             'js/paymentForm.js',
+        ];*/
+
+        $this->css = [
+            'css/commerce-wallee-cp.css',
         ];
 
         parent::init();

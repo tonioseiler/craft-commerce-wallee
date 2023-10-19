@@ -20,6 +20,7 @@ use craft\commerce\wallee\variables\CommerceWalleeVariable;
 use Craft;
 use craft\base\Plugin;
 use craft\events\RegisterElementTableAttributesEvent;
+use craft\events\TemplateEvent;
 use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\web\twig\variables\CraftVariable;
@@ -27,6 +28,7 @@ use craft\events\RegisterComponentTypesEvent;
 use craft\commerce\wallee\gateways\Gateway;
 use craft\commerce\services\Gateways;
 
+use craft\web\View;
 use yii\base\Event;
 
 use Monolog\Formatter\LineFormatter;
@@ -97,6 +99,14 @@ class CommerceWallee extends Plugin
         parent::init();
 
         $this->registerLogger();
+        //register asset bundle
+        Event::on(View::class, View::EVENT_BEFORE_RENDER_TEMPLATE, function (TemplateEvent $event) {
+            $view = Craft::$app->getView();
+            $view->registerAssetBundle(CommerceWalleeBundle::class);
+        });
+
+        self::$plugin = $this;
+
 
         // Register our variables
         Event::on(
