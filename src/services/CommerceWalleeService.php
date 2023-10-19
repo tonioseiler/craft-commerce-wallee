@@ -122,47 +122,26 @@ class CommerceWalleeService extends Component
 
     public function createWalleeOrder(Order $order, $successUrl = '/', $failedUrl = '/'): TransactionCreate
     {
+
+        //TODO: only add one lineitem for the whole order, otherwhise its a mess because the two data objects do not exactly match
+        //so no shipping cost details etc
+
         $lineItems = [];
-        foreach ($order->lineItems as $item) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName($item->getDescription());
-            $lineItem->setUniqueId($item->id);
-            $lineItem->setSku($item->getSku());
-            $lineItem->setQuantity($item->qty);
-            $subTotal = $item->getSubtotal();
-            if(!$item->getTaxIncluded()){
-                $subTotal = $subTotal + $item->getTax();
-            }
-            $lineItem->setAmountIncludingTax(round($subTotal, 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
-            $lineItems[] = $lineItem;
-        }
-        if(!is_null($order->totalDiscount)) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName('Discount');
-            $lineItem->setUniqueId(uniqid());
-            $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax(round($order->totalDiscount, 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::DISCOUNT);
-            $lineItems[] = $lineItem;
-        }
-
-        if(!is_null($order->totalShippingCost)) {
-            $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-            $lineItem->setName('Shipping');
-            $lineItem->setUniqueId(uniqid());
-            $lineItem->setQuantity(1);
-            $lineItem->setAmountIncludingTax(round($order->totalShippingCost, 2));
-            $lineItem->setType(\Wallee\Sdk\Model\LineItemType::SHIPPING);
-            $lineItems[] = $lineItem;
-        }
-
+        $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
+        $lineItem->setName('Order total for order #'.$order->id);
+        $lineItem->setUniqueId(uniqid());
+        $lineItem->setSku($order->id);
+        $lineItem->setQuantity(1);
+        $lineItem->setAmountIncludingTax(round($order->getTotal(), 2));
+        $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
+        $lineItems[] = $lineItem;
+        
         $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
         $transactionPayload->setCurrency($order->paymentCurrency);
         $transactionPayload->setMetaData(['orderId' => $order->id]);
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
-        $transactionPayload->setMerchantReference($order->id);
+        $transactionPayload->setMerchantReference($order->getShortNumber());
 
         $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
         $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));
