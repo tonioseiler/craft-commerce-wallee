@@ -1,7 +1,7 @@
 <div class="wallee-rest-form">
     <div id="payment-form"></div>
     <div id="wallee-rest-form-loading" style="display: none"></div>
-    <button id="wallee-pay" type="button" style="display: none">Pay</button>
+    <button id="wallee-pay" type="button" class="btn submit" style="display: none; margin-top: 20px;">{{'Pay'|t('commerce')}}</button>
 </div>
 <div id="wallee-pay-container">
     {% for item in paymentMethods %}
@@ -113,5 +113,11 @@
     }
     .wallee-pay .wallee-pay-name{
         margin-left: 20px;
+    }
+    body.commerceordersedit #paymentmodal #gateway-{{ order.gatewayId }}-form .footer .submit-payment{
+        display: none;
+    }
+    body.commerceordersedit #paymentmodal #gateway-{{ order.gatewayId }}-form fieldset input{
+        visibility: hidden;
     }
 {% endcss %}

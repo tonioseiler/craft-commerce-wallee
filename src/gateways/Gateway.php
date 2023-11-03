@@ -23,6 +23,7 @@ use craft\web\View;
 use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
 
+use Wallee\Sdk\ApiClient;
 use Wallee\Sdk\Model\TransactionState;
 
 class Gateway extends BaseGateway
@@ -66,19 +67,29 @@ class Gateway extends BaseGateway
 
     private function initialize(){
         if($this->order == null){
-            $this->order = Commerce::getInstance()->getCarts()->getCart();
+            if (Craft::$app->getRequest()->getIsCpRequest()) {
+                $orderId = Craft::$app->getRequest()->getBodyParam('orderId');
+                $this->order = Commerce::getInstance()->getOrders()->getOrderById($orderId);
+            }else{
+                $this->order = Commerce::getInstance()->getCarts()->getCart();
+            }
         }
 
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         if (property_exists($this->options, 'userId')) {
-            $this->client = new \Wallee\Sdk\ApiClient($this->options->userId, $this->options->apiSecretKey);
+            $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
             
             $successUrl = $this->params['successUrl'] ?? "/";
             $failedUrl = $this->params['cancelUrl'] ?? "/";
+
+            if (Craft::$app->getRequest()->getIsCpRequest()) {
+                $successUrl = $this->order->getCpEditUrl();
+                $failedUrl = $this->order->getCpEditUrl();
+            }
+
             $transactionPayload = CommerceWallee::getInstance()->getWalleeService()->createWalleeOrder($this->order, $successUrl, $failedUrl);
             $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
         }
-
     }
 
     public static function displayName(): string
@@ -123,7 +134,11 @@ class Gateway extends BaseGateway
         
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
-        
+
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            $this->options->integrationMode = 'iframe';
+        }
+
         switch ($this->options->integrationMode) {
             case 'lightbox':
                 $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
@@ -195,7 +210,7 @@ class Gateway extends BaseGateway
 
             $params = Craft::$app->getRequest()->getQueryParams();
             $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
-            $client = new \Wallee\Sdk\ApiClient($options->userId, $options->apiSecretKey);
+            $client = new ApiClient($options->userId, $options->apiSecretKey);
             $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
             $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
             $metadata = $walleeTransaction->getMetaData();

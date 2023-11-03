@@ -1,5 +1,7 @@
 # Commerce wallee Changelog
 
+## 2.3 - 2023-10-03
+- Make payment from the backend
 
 ## 2.2.8 - 2023-09-08
  - Typo fixed
