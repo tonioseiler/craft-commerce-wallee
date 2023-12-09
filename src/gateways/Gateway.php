@@ -200,7 +200,6 @@ class Gateway extends BaseGateway
         $response = Craft::$app->getResponse();
         $rawData = Craft::$app->getRequest()->getRawBody();
 
-        
         $response->format = Response::FORMAT_RAW;
         $data = Json::decodeIfJson($rawData);
 
@@ -232,15 +231,13 @@ class Gateway extends BaseGateway
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
-            if(count($orderStatus)){
+            if(count($orderStatus) > 1 && !empty($orderStatus[1])){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
                 Craft::$app->getElements()->saveElement($order);
             }
-
             $response->data = $order->number;
-
         }
         return $response;
     }
