@@ -1,10 +1,14 @@
 # Commerce wallee Changelog
 
+## 2.3.1 - 2023-12-11
+- Fix Bug in Webhooklistener
+
 ## 2.3 - 2023-10-03
 - Make payment from the backend
 
 ## 2.2.8 - 2023-09-08
  - Typo fixed
+ - 
 ## 2.2.6 - 2023-09-08
  - Bug with label of shipping costs in wallee backend fixed
  - Fix webhook error handling for non existing order ids
