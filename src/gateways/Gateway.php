@@ -139,25 +139,27 @@ class Gateway extends BaseGateway
             $this->options->integrationMode = 'iframe';
         }
 
-        switch ($this->options->integrationMode) {
-            case 'lightbox':
-                $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
-                break;
-            case 'iframe':
-                $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
-                $params['paymentMethods'] = $this->fetchPaymentMethods();
-                break;
-            case 'page':
-                Craft::$app->getResponse()->redirect($this->getPageUrl());
-                break;
-            default:
-                break;
-        }
-        
-        $view->registerAssetBundle(CommerceWalleeBundle::class);
+        if (property_exists($this->options, 'integrationMode')) {
+            switch ($this->options->integrationMode) {
+                case 'lightbox':
+                    $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
+                    break;
+                case 'iframe':
+                    $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
+                    $params['paymentMethods'] = $this->fetchPaymentMethods();
+                    break;
+                case 'page':
+                    Craft::$app->getResponse()->redirect($this->getPageUrl());
+                    break;
+                default:
+                    break;
+            }
+            
+            $view->registerAssetBundle(CommerceWalleeBundle::class);
 
-        $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
-        $view->setTemplateMode($previousMode);
+            $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
+            $view->setTemplateMode($previousMode);
+        }
 
         return $html;
     }
