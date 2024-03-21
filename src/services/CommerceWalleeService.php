@@ -136,7 +136,7 @@ class CommerceWalleeService extends Component
 
         $lineItems = [];
         $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
-        $lineItem->setName('Order total for order #'.$order->id);
+        $lineItem->setName('Order total for order #'.$order->getShortNumber());
         $lineItem->setUniqueId(uniqid());
         $lineItem->setSku($order->id);
         $lineItem->setQuantity(1);

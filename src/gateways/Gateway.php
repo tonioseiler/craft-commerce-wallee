@@ -139,25 +139,27 @@ class Gateway extends BaseGateway
             $this->options->integrationMode = 'iframe';
         }
 
-        switch ($this->options->integrationMode) {
-            case 'lightbox':
-                $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
-                break;
-            case 'iframe':
-                $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
-                $params['paymentMethods'] = $this->fetchPaymentMethods();
-                break;
-            case 'page':
-                Craft::$app->getResponse()->redirect($this->getPageUrl());
-                break;
-            default:
-                break;
-        }
-        
-        $view->registerAssetBundle(CommerceWalleeBundle::class);
+        if (property_exists($this->options, 'integrationMode')) {
+            switch ($this->options->integrationMode) {
+                case 'lightbox':
+                    $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
+                    break;
+                case 'iframe':
+                    $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
+                    $params['paymentMethods'] = $this->fetchPaymentMethods();
+                    break;
+                case 'page':
+                    Craft::$app->getResponse()->redirect($this->getPageUrl());
+                    break;
+                default:
+                    break;
+            }
+            
+            $view->registerAssetBundle(CommerceWalleeBundle::class);
 
-        $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
-        $view->setTemplateMode($previousMode);
+            $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
+            $view->setTemplateMode($previousMode);
+        }
 
         return $html;
     }
@@ -200,7 +202,6 @@ class Gateway extends BaseGateway
         $response = Craft::$app->getResponse();
         $rawData = Craft::$app->getRequest()->getRawBody();
 
-        
         $response->format = Response::FORMAT_RAW;
         $data = Json::decodeIfJson($rawData);
 
@@ -232,15 +233,13 @@ class Gateway extends BaseGateway
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
-            if(count($orderStatus)){
+            if(count($orderStatus) > 1 && !empty($orderStatus[1])){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
                 Craft::$app->getElements()->saveElement($order);
             }
-
             $response->data = $order->number;
-
         }
         return $response;
     }
