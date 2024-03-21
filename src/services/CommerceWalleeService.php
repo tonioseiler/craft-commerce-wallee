@@ -13,6 +13,7 @@ namespace craft\commerce\wallee\services;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as Commerce;
 use craft\commerce\wallee\CommerceWallee;
+use craft\helpers\App;
 use craft\helpers\UrlHelper;
 use craft\base\Component;
 
@@ -120,11 +121,18 @@ class CommerceWalleeService extends Component
         return false;
     }
 
-    public function createWalleeOrder(Order $order, $successUrl = '/', $failedUrl = '/'): TransactionCreate
+    public function createWalleeOrder(Order $order, $successUrl = null, $failedUrl = null): TransactionCreate
     {
 
         //TODO: only add one lineitem for the whole order, otherwhise its a mess because the two data objects do not exactly match
         //so no shipping cost details etc
+
+        if(is_null($successUrl)){
+            $successUrl = str_replace(":orderId", $order->id, App::env('WALLEE_PAYMENT_SUCCESS'));
+        }
+        if(is_null($failedUrl)){
+            $failedUrl = str_replace(":orderId", $order->id, App::env('WALLEE_PAYMENT_ERROR'));
+        }
 
         $lineItems = [];
         $lineItem = new \Wallee\Sdk\Model\LineItemCreate();
