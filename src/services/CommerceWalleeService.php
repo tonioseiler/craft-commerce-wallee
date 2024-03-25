@@ -56,10 +56,10 @@ class CommerceWalleeService extends Component
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
 
         $entityQueryFilter = new EntityQueryFilter([
-           'field_name' => 'createdOn',
-           'value' => $order->dateCreated->format('Y-m-d\T00:00:00'),
-           'type' => EntityQueryFilterType::LEAF,
-           'operator' => CriteriaOperator::GREATER_THAN_OR_EQUAL
+            'field_name' => 'createdOn',
+            'value' => $order->dateCreated->format('Y-m-d\T00:00:00'),
+            'type' => EntityQueryFilterType::LEAF,
+            'operator' => CriteriaOperator::GREATER_THAN_OR_EQUAL
         ]);
 
         $hasMoreEntities = true;
@@ -93,15 +93,25 @@ class CommerceWalleeService extends Component
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
 
-        $entityQueryFilter = new EntityQueryFilter([
+        $entityQueryFilter1 = new EntityQueryFilter([
             'field_name' => 'merchantReference',
-            'value' => $reference,
+            'value' => $order->reference,
+            'type' => EntityQueryFilterType::LEAF,
+            'operator' => CriteriaOperator::EQUALS
+        ]);
+
+        $entityQueryFilter2 = new EntityQueryFilter([
+            'field_name' => 'state',
+            'value' => 'FULFILL',
             'type' => EntityQueryFilterType::LEAF,
             'operator' => CriteriaOperator::EQUALS
         ]);
 
         $query = new EntityQuery([
-            'filter' => $entityQueryFilter,
+            'filter' => new EntityQueryFilter([
+                'type' => EntityQueryFilterType::_AND,
+                'children' => [$entityQueryFilter1, $entityQueryFilter2]
+            ]),
             'number_of_entities' => 1,
             'starting_entity' => 0
         ]);
@@ -143,7 +153,7 @@ class CommerceWalleeService extends Component
         $lineItem->setAmountIncludingTax(round($order->getTotal(), 2));
         $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
         $lineItems[] = $lineItem;
-        
+
         $transactionPayload = new \Wallee\Sdk\Model\TransactionCreate();
         $transactionPayload->setCurrency($order->paymentCurrency);
         $transactionPayload->setMetaData(['orderId' => $order->id]);
@@ -155,5 +165,5 @@ class CommerceWalleeService extends Component
         $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));
 
         return $transactionPayload;
-    } 
+    }
 }
