@@ -137,6 +137,9 @@ class CommerceWallee extends Plugin
                 $event->tableAttributes['walleeTransactionId'] = [
                     'label' => 'Transactions'
                 ];
+                $event->tableAttributes['paymentMethod'] = [
+                    'label' => 'Payment Method'
+                ];
             }
         );
 
@@ -156,7 +159,18 @@ class CommerceWallee extends Plugin
                         }
                     }
                     $event->html = implode('', $references);
+                }
+                if ($event->attribute == 'paymentMethod') {
+                    $order = $event->sender;
+                    $transactions = Commerce::getInstance()->getTransactions()->getAllTransactionsByOrderId($order->id);
+                    if(count($transactions) > 0) {
+                        $transaction = $transactions[0];
+                        $gateway = Commerce::getInstance()->getGateways()->getGatewayById($transaction->gatewayId);
+                        $response = json_decode($transaction->response);
+                        $event->html = $response->paymentConnectorConfiguration->name ?? "-";
+                    }
 
+                    //$event->html = "payment method";
                 }
             }
         );
@@ -164,6 +178,8 @@ class CommerceWallee extends Plugin
         Event::on(Gateways::class, Gateways::EVENT_REGISTER_GATEWAY_TYPES,  function(RegisterComponentTypesEvent $event) {
             $event->types[] = Gateway::class;
         });
+
+
 
         //Craft::info('commerce wallee plugin loaded', 'craft-commerce-wallee');
 
