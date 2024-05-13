@@ -146,7 +146,7 @@ class CommerceWallee extends Plugin
         // get the wallee transaction id
         Event::on(
             Order::class,
-            Order::EVENT_SET_TABLE_ATTRIBUTE_HTML,
+            Order::EVENT_DEFINE_ATTRIBUTE_HTML,
             function (Event $event){
                 if ($event->attribute == 'walleeTransactionId') {
                     $order = $event->sender;
