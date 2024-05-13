@@ -18,7 +18,7 @@ Add Wallee/Postfinance as a payment gateway in your craft commerce installation.
 ### Configurable modes:
 Choose between lightbox, iframe and fullpage integration mode.
 
-Packages availabel for Craft 3 and 4.
+Packages availabel for Craft 3, 4 and 5.
 
 Wallee status changes can be mapped dynamically to craft commerce order status.
 
