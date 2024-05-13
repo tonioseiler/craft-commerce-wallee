@@ -2,7 +2,7 @@
     "name": "furbo/craft-commerce-wallee",
     "description": "Craft Commerce Payment Gateway for Wallee",
     "type": "craft-plugin",
-    "version": "2.3.7",
+    "version": "1.0.0",
     "keywords": [
         "craft",
         "cms",
@@ -22,9 +22,9 @@
         }
     ],
     "require": {
-        "php": "^8.0.2",
-        "craftcms/cms": "^4.0.0",
-        "craftcms/commerce": "^4.0.0",
+        "php": "^8.2",
+        "craftcms/cms": "^5.0.0",
+        "craftcms/commerce": "^5.0.0",
         "wallee/sdk": "^3.1.4"
     },
     "autoload": {
