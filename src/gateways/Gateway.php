@@ -135,11 +135,10 @@ class Gateway extends BaseGateway
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
-        if (Craft::$app->getRequest()->getIsCpRequest()) {
-            $this->options->integrationMode = 'iframe';
-        }
-
         if (property_exists($this->options, 'integrationMode')) {
+            if (Craft::$app->getRequest()->getIsCpRequest()) {
+                $this->options->integrationMode = 'iframe';
+            }
             switch ($this->options->integrationMode) {
                 case 'lightbox':
                     $view->registerJsFile($this->getJavascriptUrl($this->options->integrationMode));
