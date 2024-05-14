@@ -135,6 +135,8 @@ class Gateway extends BaseGateway
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
+        $html = '';
+
         if (property_exists($this->options, 'integrationMode')) {
             if (Craft::$app->getRequest()->getIsCpRequest()) {
                 $this->options->integrationMode = 'iframe';
@@ -351,5 +353,10 @@ class Gateway extends BaseGateway
     public function supportsWebhooks(): bool
     {
         return true;
+    }
+
+    public function availableForUseWithOrder(Order $order): bool
+    {
+        return $this->id == $order->gatewayId;
     }
 }
