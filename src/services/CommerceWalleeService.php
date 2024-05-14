@@ -90,6 +90,7 @@ class CommerceWalleeService extends Component
 
     public function getTransaction($reference, Order $order)
     {
+
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
 
