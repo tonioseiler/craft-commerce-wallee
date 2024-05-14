@@ -96,7 +96,7 @@ class CommerceWalleeService extends Component
 
         $entityQueryFilter1 = new EntityQueryFilter([
             'field_name' => 'merchantReference',
-            'value' => $order->reference,
+            'value' => $order->id,
             'type' => EntityQueryFilterType::LEAF,
             'operator' => CriteriaOperator::EQUALS
         ]);
@@ -160,7 +160,7 @@ class CommerceWalleeService extends Component
         $transactionPayload->setMetaData(['orderId' => $order->id]);
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
-        $transactionPayload->setMerchantReference($order->reference);
+        $transactionPayload->setMerchantReference($order->id);
 
         $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
         $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));
