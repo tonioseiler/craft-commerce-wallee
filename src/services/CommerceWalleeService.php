@@ -90,12 +90,13 @@ class CommerceWalleeService extends Component
 
     public function getTransaction($reference, Order $order)
     {
+
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
         $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
 
         $entityQueryFilter1 = new EntityQueryFilter([
             'field_name' => 'merchantReference',
-            'value' => $order->reference,
+            'value' => $order->id,
             'type' => EntityQueryFilterType::LEAF,
             'operator' => CriteriaOperator::EQUALS
         ]);
