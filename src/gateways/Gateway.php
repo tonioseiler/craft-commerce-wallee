@@ -359,4 +359,6 @@ class Gateway extends BaseGateway
     {
         return $this->id == $order->gatewayId;
     }
+
+    //something like this
 }
