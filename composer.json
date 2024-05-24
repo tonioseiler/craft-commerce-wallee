@@ -25,7 +25,7 @@
         "php": "^8.2",
         "craftcms/cms": "^5.0.0",
         "craftcms/commerce": "^5.0.0",
-        "wallee/sdk": "^3.1.4"
+        "wallee/sdk": "^4.2.0"
     },
     "autoload": {
         "psr-4": {
