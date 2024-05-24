@@ -180,18 +180,17 @@ class CommerceWalleeService extends Component
 
         $productComponents = $client->getSubscriptionProductComponentService()->search($gateway->spaceId, $entityQueryFilter);
 
-
-        $pComponents = [];
         foreach ($productComponents as $productComponent) {
             $pComponents[] = [
-                'id' => $productComponent->getId(),
+                'id' => $productComponent->getReference()->getId(),
                 'name' => $productComponent->getName(),
                 'version' => $productComponent->getVersion(),
                 'description' => $productComponent->getDescription(),
                 'reference' => $productComponent->getReference(),
                 'sortOrder' => $productComponent->getSortOrder(),
                 'component_group' => $productComponent->getComponentGroup(),
-                'productName' => $productComponent->getComponentGroup()->getProductVersion()->getProduct()->getName()
+                'productVersionName' => $productComponent->getComponentGroup()->getProductVersion()->getName(),
+                'productName' => $productComponent->getComponentGroup()->getProductVersion()->getProduct()->getName(),
             ];
         }
 

@@ -3,7 +3,7 @@
 namespace craft\commerce\wallee\base;
 
 use Craft;
-use craft\commerce\base\Plan;
+use craft\commerce\base\Plan as BasePlan;
 use craft\commerce\base\SubscriptionGateway as BaseGateway;
 use craft\commerce\base\SubscriptionResponseInterface;
 use craft\commerce\elements\Subscription;
@@ -11,7 +11,7 @@ use craft\commerce\models\subscriptions\CancelSubscriptionForm;
 use craft\commerce\models\subscriptions\SubscriptionForm;
 use craft\commerce\models\subscriptions\SwitchPlansForm;
 use craft\commerce\wallee\CommerceWallee;
-use craft\elements\User;
+use craft\commerce\wallee\models\Plan;use craft\elements\User;
 
 abstract class SubscriptionGateway extends BaseGateway{
 
@@ -38,9 +38,9 @@ abstract class SubscriptionGateway extends BaseGateway{
         return Craft::$app->getView()->renderTemplate('commerce-wallee/planSettings', $params);
     }
 
-    public function getPlanModel(): Plan
+    public function getPlanModel(): BasePlan
     {
-        // TODO: Implement getPlanModel() method.
+        return new Plan();
     }
 
     public function getSubscriptionFormModel(): SubscriptionForm
@@ -70,7 +70,10 @@ abstract class SubscriptionGateway extends BaseGateway{
 
     public function getSubscriptionPlanByReference(string $reference): string
     {
-        // TODO: Implement getSubscriptionPlanByReference() method.
+        if (empty($reference)) {
+            return '';
+        }
+        return '';
     }
 
     public function getSubscriptionPlans(): array
@@ -81,25 +84,29 @@ abstract class SubscriptionGateway extends BaseGateway{
         $productComponents = CommerceWallee::getInstance()->getWalleeService()->getProductComponents();
         foreach ($productComponents as $productComponent){
             $name = $productComponent['productName'] . ' - ';
+            foreach ($productComponent['productVersionName'] as $key => $value){
+                $name.= $value . ' - ';
+                break;
+            }
             foreach ($productComponent['name'] as $key => $value){
                 $name.= $value;
                 break;
             }
             $allPlans[] = [
                 'reference' => $productComponent['id'],
-                'name' => $name . ":" . $productComponent['id']
+                'name' => $name . " - " . $productComponent['id']
             ];
         }
 
         return $allPlans;
     }
 
-    public function subscribe(User $user, Plan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
+    public function subscribe(User $user, BasePlan $plan, SubscriptionForm $parameters): SubscriptionResponseInterface
     {
         // TODO: Implement subscribe() method.
     }
 
-    public function switchSubscriptionPlan(Subscription $subscription, Plan $plan, SwitchPlansForm $parameters): SubscriptionResponseInterface
+    public function switchSubscriptionPlan(Subscription $subscription, BasePlan $plan, SwitchPlansForm $parameters): SubscriptionResponseInterface
     {
         // TODO: Implement switchSubscriptionPlan() method.
     }
