@@ -4,7 +4,7 @@
 namespace craft\commerce\wallee\gateways;
 
 use Craft;
-use craft\commerce\base\Gateway as BaseGateway;
+use craft\commerce\wallee\base\SubscriptionGateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
 use craft\commerce\elements\Order;
 use craft\commerce\models\payments\BasePaymentForm;
@@ -15,13 +15,10 @@ use craft\commerce\wallee\CommerceWallee;
 use craft\commerce\wallee\CommerceWalleeBundle;
 use craft\commerce\Plugin as Commerce;
 use craft\helpers\Json;
-use craft\helpers\UrlHelper;
 use craft\web\Response;
 use craft\web\Response as WebResponse;
 use craft\commerce\wallee\responses\CheckoutResponse;
 use craft\web\View;
-use yii\web\NotFoundHttpException;
-use craft\commerce\records\Transaction as TransactionRecord;
 
 use Wallee\Sdk\ApiClient;
 use Wallee\Sdk\Model\TransactionState;

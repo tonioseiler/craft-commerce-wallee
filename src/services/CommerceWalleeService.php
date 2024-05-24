@@ -167,4 +167,36 @@ class CommerceWalleeService extends Component
 
         return $transactionPayload;
     }
+
+    public function getProductComponents()
+    {
+        $gateway = Commerce::getInstance()->getGateways()->getGatewayById(2);
+        $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
+
+
+        $entityQueryFilter = new EntityQuery([
+        ]);
+
+
+        $productComponents = $client->getSubscriptionProductComponentService()->search($gateway->spaceId, $entityQueryFilter);
+
+
+        $pComponents = [];
+        foreach ($productComponents as $productComponent) {
+            $pComponents[] = [
+                'id' => $productComponent->getId(),
+                'name' => $productComponent->getName(),
+                'version' => $productComponent->getVersion(),
+                'description' => $productComponent->getDescription(),
+                'reference' => $productComponent->getReference(),
+                'sortOrder' => $productComponent->getSortOrder(),
+                'component_group' => $productComponent->getComponentGroup(),
+                'productName' => $productComponent->getComponentGroup()->getProductVersion()->getProduct()->getName()
+            ];
+        }
+
+
+        return $pComponents;
+    }
+
 }
