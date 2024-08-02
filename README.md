@@ -80,7 +80,13 @@ php craft install/plugin craft-commerce-wallee
         cancelUrl: '/checkout/cancel?number=' ~ cart.number,
         paymentButtonSelector: '#wallee-lightbox', 
     } %}
+    {# Commerce 3 #}
     {{ cart.gateway.getPaymentFormHtml(params)|raw }}
+    
+    {# Commerce 4 and 5 #}
+    {% namespace cart.gateway.handle|commercePaymentFormNamespace %}
+      {{ cart.gateway.getPaymentFormHtml(params)|raw }}
+    {% endnamespace %}
 </form>
 ```
 
