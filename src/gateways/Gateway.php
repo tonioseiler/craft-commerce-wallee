@@ -285,7 +285,6 @@ class Gateway extends BaseGateway
 
             if(count($orderStatus) > 1 && !empty($orderStatus[1])){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
-                dd('change order status: '.$order->orderStatusId.'-'.$orderStatus[1]);
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
                 Craft::$app->getElements()->saveElement($order);
