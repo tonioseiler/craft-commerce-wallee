@@ -28,7 +28,17 @@ use Wallee\Sdk\Model\TransactionState;
 
 class Gateway extends BaseGateway
 {
-    
+
+    const STATUS_CONFIRMED = 'CONFIRMED';
+    const STATUS_PROCESSING = 'PROCESSING';
+    const STATUS_AUTHORIZED = 'AUTHORIZED';
+    const STATUS_COMPLETED = 'COMPLETED';
+    const STATUS_FULFILL = 'FULFILL';
+    const STATUS_PENDING = 'PENDING';
+    const STATUS_DECLINE = 'DECLINE';
+    const STATUS_FAILED = 'FAILED';
+    const STATUS_VOIDED = 'VOIDED';
+
     /**
      * @var string
      */
@@ -215,9 +225,8 @@ class Gateway extends BaseGateway
             $client = new ApiClient($options->userId, $options->apiSecretKey);
             $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
             $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
-            $metadata = $walleeTransaction->getMetaData();
 
-            $orderId = (int)$metadata["orderId"];
+            $orderId = $walleeTransaction->getMerchantReference();
             $order = Order::findOne($orderId);
 
             if (empty($order)) {
@@ -228,11 +237,47 @@ class Gateway extends BaseGateway
 
             $walleeState = $walleeTransaction->getState();
 
+            try {
+                $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
+                $createTransaction = false;
+                if($walleeState === self::STATUS_PENDING){
+                    $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
+                    $transaction->status = TransactionRecord::STATUS_PENDING;
+                    $createTransaction = true;
+                }
+                if($walleeState === self::STATUS_PROCESSING){
+                    $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
+                    $transaction->status = TransactionRecord::STATUS_PROCESSING;
+                    $createTransaction = true;
+                }
+                if($walleeState === self::STATUS_FULFILL){
+                    $transaction->type = TransactionRecord::TYPE_PURCHASE;
+                    $transaction->status = TransactionRecord::STATUS_SUCCESS;
+                    $createTransaction = true;
+                }
+                if($walleeState === self::STATUS_FAILED || $walleeState === self::STATUS_DECLINE){
+                    $transaction->type = TransactionRecord::TYPE_REFUND;
+                    $transaction->status = TransactionRecord::STATUS_FAILED;
+                    $createTransaction = true;
+                }
+
+                if($createTransaction) {
+                    $transaction->response = $walleeTransaction->__toString();
+                    $transaction->reference = $walleeTransaction->getId();
+                    Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
+                }
+
+            } catch (\Exception $e) {
+                Craft::info($e->getMessage(), 'craft-commerce-wallee');
+            }
+
+
             Craft::info('Wallee state: '.$walleeState, 'craft-commerce-wallee');
 
             //map transaction state to order state
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
+
 
             if(count($orderStatus) > 1 && !empty($orderStatus[1])){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
@@ -243,7 +288,88 @@ class Gateway extends BaseGateway
             $response->data = $order->number;
         }
         return $response;
+    }public function processWebHook(): WebResponse
+{
+
+    $response = Craft::$app->getResponse();
+    $rawData = Craft::$app->getRequest()->getRawBody();
+
+    $response->format = Response::FORMAT_RAW;
+    $data = Json::decodeIfJson($rawData);
+
+    Craft::info('processing webhook. Data: '.json_encode($data), 'craft-commerce-wallee');
+
+    if ($data) {
+
+        $params = Craft::$app->getRequest()->getQueryParams();
+        $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
+        $client = new ApiClient($options->userId, $options->apiSecretKey);
+        $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
+        $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
+
+        $orderId = $walleeTransaction->getMerchantReference();
+        $order = Order::findOne($orderId);
+
+        if (empty($order)) {
+            Craft::warning('Order not found: '.json_encode($data), 'craft-commerce-wallee');
+            $response->data = 'Warning: Order not found.';
+            return $response;
+        }
+
+        $walleeState = $walleeTransaction->getState();
+
+        try {
+            $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
+            $createTransaction = false;
+            if($walleeState === self::STATUS_PENDING){
+                $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
+                $transaction->status = TransactionRecord::STATUS_PENDING;
+                $createTransaction = true;
+            }
+            if($walleeState === self::STATUS_PROCESSING){
+                $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
+                $transaction->status = TransactionRecord::STATUS_PROCESSING;
+                $createTransaction = true;
+            }
+            if($walleeState === self::STATUS_FULFILL){
+                $transaction->type = TransactionRecord::TYPE_PURCHASE;
+                $transaction->status = TransactionRecord::STATUS_SUCCESS;
+                $createTransaction = true;
+            }
+            if($walleeState === self::STATUS_FAILED || $walleeState === self::STATUS_DECLINE){
+                $transaction->type = TransactionRecord::TYPE_REFUND;
+                $transaction->status = TransactionRecord::STATUS_FAILED;
+                $createTransaction = true;
+            }
+
+            if($createTransaction) {
+                $transaction->response = $walleeTransaction->__toString();
+                $transaction->reference = $walleeTransaction->getId();
+                Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
+            }
+
+        } catch (\Exception $e) {
+            Craft::info($e->getMessage(), 'craft-commerce-wallee');
+        }
+
+
+        Craft::info('Wallee state: '.$walleeState, 'craft-commerce-wallee');
+
+        //map transaction state to order state
+        $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
+        $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
+
+
+        if(count($orderStatus) > 1 && !empty($orderStatus[1])){
+            Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
+            $order->orderStatusId = $orderStatus[1];
+            $order->dateUpdated = new \DateTime();
+            Craft::$app->getElements()->saveElement($order);
+        }
+        $response->data = $order->number;
     }
+    return $response;
+}
 
     public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
