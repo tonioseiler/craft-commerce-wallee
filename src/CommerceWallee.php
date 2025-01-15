@@ -100,10 +100,10 @@ class CommerceWallee extends Plugin
 
         $this->registerLogger();
         //register asset bundle
-        Event::on(View::class, View::EVENT_BEFORE_RENDER_TEMPLATE, function (TemplateEvent $event) {
+        /*Event::on(View::class, View::EVENT_BEFORE_RENDER_TEMPLATE, function (TemplateEvent $event) {
             $view = Craft::$app->getView();
             $view->registerAssetBundle(CommerceWalleeBundle::class);
-        });
+        });*/
 
         self::$plugin = $this;
 
