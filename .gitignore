@@ -2,3 +2,4 @@ vendor
 composer.lock
 .idea/craft-commerce-wallee.iml
 .idea
+.idea/php.xml

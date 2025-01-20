@@ -20,6 +20,7 @@ use yii\web\Response;
 use craft\helpers\App;
 use craft\helpers\UrlHelper;
 use craft\commerce\records\Transaction as TransactionRecord;
+use craft\commerce\elements\Order;
 
 /**
  * Default Controller
@@ -126,7 +127,31 @@ class DefaultController extends BaseController
     public function actionComplete()
     {
 
-        $params = Craft::$app->getRequest()->getQueryParams();
+        //record transaction
+        try {
+
+            $params = Craft::$app->getRequest()->getQueryParams();
+
+            $orderId = $params['orderId'];
+            $order = Order::findOne($orderId);
+
+            $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order, [\Wallee\Sdk\Model\TransactionState::FULFILL]);
+
+            $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
+            $transaction->type = TransactionRecord::TYPE_PURCHASE;
+            $transaction->status = TransactionRecord::STATUS_SUCCESS;
+            if($walleeTransaction) {
+                $transaction->response = $walleeTransaction->__toString();
+                $transaction->reference = $walleeTransaction->getId();
+            }
+
+            Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
+
+        }catch (\Exception $e){
+            Craft::info($e->getMessage(), 'craft-commerce-wallee');
+        }
+
+
         Craft::$app->getResponse()->redirect($params['successUrl'])->send();
 
         die();
