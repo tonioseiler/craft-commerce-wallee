@@ -88,7 +88,7 @@ class Gateway extends BaseGateway
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         if (property_exists($this->options, 'userId')) {
             $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
-            
+
             $successUrl = $this->params['successUrl'] ?? "/";
             $failedUrl = $this->params['cancelUrl'] ?? "/";
 
@@ -141,7 +141,7 @@ class Gateway extends BaseGateway
         $this->initialize();
 
         $view = Craft::$app->getView();
-        
+
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
@@ -165,7 +165,7 @@ class Gateway extends BaseGateway
                 default:
                     break;
             }
-            
+
             $view->registerAssetBundle(CommerceWalleeBundle::class);
 
             $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
@@ -185,7 +185,7 @@ class Gateway extends BaseGateway
      */
     private function getJavascriptUrl(string $mode = 'lightbox'): string{
         try {
-            
+
             if($mode == 'lightbox'){
                 $transactionService = new \Wallee\Sdk\Service\TransactionLightboxService($this->client);
             }else{
@@ -235,7 +235,7 @@ class Gateway extends BaseGateway
                 return $response;
             }
 
-            $walleeState = $walleeTransaction->getState();
+            $walleeState = $data['state'] ?? $walleeTransaction->getState();
 
             try {
                 $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
@@ -256,7 +256,7 @@ class Gateway extends BaseGateway
                     $createTransaction = true;
                 }
                 if($walleeState === self::STATUS_FAILED || $walleeState === self::STATUS_DECLINE){
-                    $transaction->type = TransactionRecord::TYPE_REFUND;
+                    $transaction->type = TransactionRecord::TYPE_PURCHASE;
                     $transaction->status = TransactionRecord::STATUS_FAILED;
                     $createTransaction = true;
                 }
@@ -328,9 +328,9 @@ class Gateway extends BaseGateway
     {
 
         $this->order = $transaction->order;
-        
+
         $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
-        
+
         Craft::info('Refund transaction: '.$walleeTransaction->getId(), 'craft-commerce-wallee');
 
         $amount = $walleeTransaction->getAuthorizationAmount();
