@@ -239,7 +239,7 @@ class Gateway extends BaseGateway
                 return $response;
             }
 
-            $walleeState = $walleeTransaction->getState();
+            $walleeState = $data['state'] ?? $walleeTransaction->getState();
 
             try {
                 $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
@@ -260,7 +260,7 @@ class Gateway extends BaseGateway
                     $createTransaction = true;
                 }
                 if($walleeState === self::STATUS_FAILED || $walleeState === self::STATUS_DECLINE){
-                    $transaction->type = TransactionRecord::TYPE_REFUND;
+                    $transaction->type = TransactionRecord::TYPE_PURCHASE;
                     $transaction->status = TransactionRecord::STATUS_FAILED;
                     $createTransaction = true;
                 }
