@@ -235,6 +235,9 @@ class Gateway extends BaseGateway
                 return $response;
             }
 
+            // Webhooks have no customer session, so a recalculation here would drop user-scoped discounts
+            $order->setRecalculationMode(Order::RECALCULATION_MODE_NONE);
+
             $walleeState = $data['state'] ?? $walleeTransaction->getState();
 
             try {
@@ -264,6 +267,8 @@ class Gateway extends BaseGateway
                 if($createTransaction) {
                     $transaction->response = $walleeTransaction->__toString();
                     $transaction->reference = $walleeTransaction->getId();
+                    $transaction->paymentAmount = $walleeTransaction->getAuthorizationAmount();
+                    $transaction->amount = $transaction->paymentAmount / $transaction->paymentRate;
                     Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
                 }
 

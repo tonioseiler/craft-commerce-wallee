@@ -1,5 +1,10 @@
 # Commerce wallee Changelog
 
+## 5.0.12
+- Fixed order totals being recalculated in sessionless wallee callbacks, which dropped per-user coupon discounts and inflated the order total
+- Transaction amounts are now taken from the wallee transaction instead of the order balance
+
+
 ## 2.3.1 - 2023-12-11
 - Fix Bug in Webhooklistener
 

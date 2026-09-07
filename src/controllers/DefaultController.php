@@ -135,6 +135,9 @@ class DefaultController extends BaseController
             $orderId = $params['orderId'];
             $order = Order::findOne($orderId);
 
+            // The redirect back from wallee may have no customer session, so never re-price the order here
+            $order->setRecalculationMode(Order::RECALCULATION_MODE_NONE);
+
             $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order, [\Wallee\Sdk\Model\TransactionState::FULFILL]);
 
             $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
@@ -143,6 +146,8 @@ class DefaultController extends BaseController
             if($walleeTransaction) {
                 $transaction->response = $walleeTransaction->__toString();
                 $transaction->reference = $walleeTransaction->getId();
+                $transaction->paymentAmount = $walleeTransaction->getAuthorizationAmount();
+                $transaction->amount = $transaction->paymentAmount / $transaction->paymentRate;
             }
 
             Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
