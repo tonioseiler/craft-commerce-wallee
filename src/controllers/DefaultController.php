@@ -11,6 +11,7 @@
 namespace craft\commerce\wallee\controllers;
 
 use craft\commerce\wallee\CommerceWallee;
+use craft\commerce\wallee\gateways\Gateway;
 
 use Craft;
 use craft\helpers\Json;
@@ -144,6 +145,12 @@ class DefaultController extends BaseController
             $transaction->type = TransactionRecord::TYPE_PURCHASE;
             $transaction->status = TransactionRecord::STATUS_SUCCESS;
             if($walleeTransaction) {
+                // The fulfill webhook usually records the payment first, so don't record it twice
+                if(Gateway::hasTransaction($order, $walleeTransaction->getId(), $transaction->type, $transaction->status)) {
+                    Craft::$app->getResponse()->redirect($params['successUrl'])->send();
+                    die();
+                }
+
                 $transaction->response = $walleeTransaction->__toString();
                 $transaction->reference = $walleeTransaction->getId();
                 $transaction->paymentAmount = $walleeTransaction->getAuthorizationAmount();

@@ -1,5 +1,8 @@
 # Commerce wallee Changelog
 
+## 5.0.13
+- Fixed duplicate payment transactions when wallee delivers more than one webhook for the same transaction, which left orders marked as overpaid
+
 ## 5.0.12
 - Fixed order totals being recalculated in sessionless wallee callbacks, which dropped per-user coupon discounts and inflated the order total
 - Transaction amounts are now taken from the wallee transaction instead of the order balance

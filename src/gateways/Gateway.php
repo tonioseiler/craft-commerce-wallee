@@ -207,6 +207,20 @@ class Gateway extends BaseGateway
         return $transactionService->paymentPageUrl($this->options->spaceId, $this->transaction->getId());
     }
 
+    /**
+     * Whether the order already holds a transaction for this wallee transaction, type and status.
+     */
+    public static function hasTransaction(Order $order, $reference, string $type, string $status): bool
+    {
+        foreach ($order->getTransactions() as $existing) {
+            if ($existing->reference == $reference && $existing->type == $type && $existing->status == $status) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function processWebHook(): WebResponse
     {
 
@@ -262,6 +276,12 @@ class Gateway extends BaseGateway
                     $transaction->type = TransactionRecord::TYPE_PURCHASE;
                     $transaction->status = TransactionRecord::STATUS_FAILED;
                     $createTransaction = true;
+                }
+
+                // wallee delivers a webhook per state change, so only record each state once
+                if($createTransaction && self::hasTransaction($order, $walleeTransaction->getId(), $transaction->type, $transaction->status)) {
+                    Craft::info('Skipping duplicate transaction for wallee transaction '.$walleeTransaction->getId(), 'craft-commerce-wallee');
+                    $createTransaction = false;
                 }
 
                 if($createTransaction) {
