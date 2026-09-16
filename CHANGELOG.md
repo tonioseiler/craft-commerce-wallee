@@ -1,5 +1,8 @@
 # Commerce wallee Changelog
 
+## 5.0.14
+- Fixed mapping of statuses, only trigger status update and emails when status actually really changes
+
 ## 5.0.13
 - Fixed duplicate payment transactions when wallee delivers more than one webhook for the same transaction, which left orders marked as overpaid
 
