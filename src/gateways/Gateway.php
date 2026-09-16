@@ -303,8 +303,7 @@ class Gateway extends BaseGateway
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
-
-            if(count($orderStatus) > 1 && !empty($orderStatus[1])){
+            if(count($orderStatus) > 1 && !empty($orderStatus[1]) && $order->orderStatusId != $orderStatus[1]){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
