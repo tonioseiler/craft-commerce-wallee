@@ -361,7 +361,9 @@ class Gateway extends BaseGateway
 
         $amount = $walleeTransaction->getAuthorizationAmount();
 
-        $this->initialize();
+        // Only the API client is needed; initialize() would also create a new wallee transaction for the order
+        $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
+        $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
 
         //create a wallee transaction to refund
         $refund = new \Wallee\Sdk\Model\RefundCreate();

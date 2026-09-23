@@ -1,5 +1,8 @@
 # Commerce wallee Changelog
 
+## 2.3.22
+- Refunds no longer create a new wallee transaction for the order, which could fail for fully paid orders
+
 ## 2.3.21
 - Ported the fixes from 5.0.12 to 5.0.15 to Craft 4:
   - Order totals are no longer recalculated in sessionless wallee callbacks, which dropped per-user coupon discounts
