@@ -6,6 +6,7 @@ namespace craft\commerce\wallee\gateways;
 use Craft;
 use craft\commerce\base\Gateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
+use craft\commerce\errors\NotImplementedException;
 use craft\commerce\elements\Order;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\payments\OffsitePaymentForm;
@@ -38,10 +39,6 @@ class Gateway extends BaseGateway
     const STATUS_DECLINE = 'DECLINE';
     const STATUS_FAILED = 'FAILED';
     const STATUS_VOIDED = 'VOIDED';
-
-    const STATUS = [
-
-    ];
 
     /**
      * @var string
@@ -92,7 +89,7 @@ class Gateway extends BaseGateway
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         if (property_exists($this->options, 'userId')) {
             $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
-            
+
             $successUrl = $this->params['successUrl'] ?? "/";
             $failedUrl = $this->params['cancelUrl'] ?? "/";
 
@@ -120,22 +117,12 @@ class Gateway extends BaseGateway
 
     public function completeAuthorize(Transaction $transaction): RequestResponseInterface
     {
-        Craft::info('completeAuthorize', 'craft-commerce-wallee');
-        dd("completeAuthorize");
-        $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
-        $completeRequest = $this->prepareCompleteAuthorizeRequest($request);
-
-        return $this->performRequest($completeRequest, $transaction);
+        throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
     }
 
     public function completePurchase(Transaction $transaction): RequestResponseInterface
     {
-        Craft::info('completePurchase', 'craft-commerce-wallee');
-        dd("completePurchase");
-        $request = $this->_prepareOffsiteTransactionConfirmationRequest($transaction);
-        $completeRequest = $this->prepareCompletePurchaseRequest($request);
-
-        return $this->performRequest($completeRequest, $transaction);
+        throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
     }
 
     public function getPaymentFormHtml(array $params): ?string
@@ -145,7 +132,7 @@ class Gateway extends BaseGateway
         $this->initialize();
 
         $view = Craft::$app->getView();
-        
+
         $previousMode = $view->getTemplateMode();
         $view->setTemplateMode(View::TEMPLATE_MODE_CP);
 
@@ -169,7 +156,7 @@ class Gateway extends BaseGateway
                 default:
                     break;
             }
-            
+
             $view->registerAssetBundle(CommerceWalleeBundle::class);
 
             $html = Craft::$app->getView()->renderTemplate('commerce-wallee/_components/gateways/_' . $this->options->integrationMode, $params);
@@ -189,7 +176,7 @@ class Gateway extends BaseGateway
      */
     private function getJavascriptUrl(string $mode = 'lightbox'): string{
         try {
-            
+
             if($mode == 'lightbox'){
                 $transactionService = new \Wallee\Sdk\Service\TransactionLightboxService($this->client);
             }else{
@@ -209,6 +196,60 @@ class Gateway extends BaseGateway
     {
         $transactionService = new \Wallee\Sdk\Service\TransactionPaymentPageService($this->client);
         return $transactionService->paymentPageUrl($this->options->spaceId, $this->transaction->getId());
+    }
+
+    /**
+     * Whether the order already holds a transaction for this wallee transaction, type and status.
+     */
+    private static function hasTransaction(Order $order, $reference, string $type, string $status): bool
+    {
+        // Read from the database, not the order's cached transactions, so the check is fresh inside the lock
+        foreach (Commerce::getInstance()->getTransactions()->getAllTransactionsByOrderId($order->id) as $existing) {
+            if ($existing->reference == $reference && $existing->type == $type && $existing->status == $status) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Records a wallee transaction on the order once, using the amount wallee actually authorized.
+     * Webhooks and the success redirect call this concurrently, so it is serialised per order.
+     */
+    public static function recordTransaction(Order $order, \Wallee\Sdk\Model\Transaction $walleeTransaction, string $type, string $status): void
+    {
+        $mutex = Craft::$app->getMutex();
+        $lockName = 'walleeTransaction:' . $order->id;
+
+        if (!$mutex->acquire($lockName, 15)) {
+            throw new \RuntimeException('Could not acquire lock for order ' . $order->id);
+        }
+
+        try {
+            // wallee delivers a webhook per state change, so only record each state once
+            if (self::hasTransaction($order, $walleeTransaction->getId(), $type, $status)) {
+                Craft::info('Skipping duplicate transaction for wallee transaction '.$walleeTransaction->getId(), 'craft-commerce-wallee');
+                return;
+            }
+
+            $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
+            $transaction->type = $type;
+            $transaction->status = $status;
+            $transaction->response = $walleeTransaction->__toString();
+            $transaction->reference = $walleeTransaction->getId();
+            $transaction->paymentAmount = $walleeTransaction->getAuthorizationAmount();
+            $transaction->amount = $transaction->paymentAmount / $transaction->paymentRate;
+
+            if ($transaction->paymentAmount <= 0) {
+                Craft::warning('Refusing to save wallee transaction '.$walleeTransaction->getId().' with non-positive amount for order '.$order->id, 'craft-commerce-wallee');
+                return;
+            }
+
+            Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
+        } finally {
+            $mutex->release($lockName);
+        }
     }
 
     public function processWebHook(): WebResponse
@@ -239,40 +280,26 @@ class Gateway extends BaseGateway
                 return $response;
             }
 
+            // Webhooks have no customer session, so a recalculation here would drop user-scoped discounts
+            $order->setRecalculationMode(Order::RECALCULATION_MODE_NONE);
+
             $walleeState = $data['state'] ?? $walleeTransaction->getState();
 
-            try {
-                $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
-                $createTransaction = false;
-                if($walleeState === self::STATUS_PENDING){
-                    $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
-                    $transaction->status = TransactionRecord::STATUS_PENDING;
-                    $createTransaction = true;
-                }
-                if($walleeState === self::STATUS_PROCESSING){
-                    $transaction->type = TransactionRecord::TYPE_AUTHORIZE;
-                    $transaction->status = TransactionRecord::STATUS_PROCESSING;
-                    $createTransaction = true;
-                }
-                if($walleeState === self::STATUS_FULFILL){
-                    $transaction->type = TransactionRecord::TYPE_PURCHASE;
-                    $transaction->status = TransactionRecord::STATUS_SUCCESS;
-                    $createTransaction = true;
-                }
-                if($walleeState === self::STATUS_FAILED || $walleeState === self::STATUS_DECLINE){
-                    $transaction->type = TransactionRecord::TYPE_PURCHASE;
-                    $transaction->status = TransactionRecord::STATUS_FAILED;
-                    $createTransaction = true;
-                }
+            $transactionTypes = [
+                self::STATUS_PENDING => [TransactionRecord::TYPE_AUTHORIZE, TransactionRecord::STATUS_PENDING],
+                self::STATUS_PROCESSING => [TransactionRecord::TYPE_AUTHORIZE, TransactionRecord::STATUS_PROCESSING],
+                self::STATUS_FULFILL => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_SUCCESS],
+                self::STATUS_FAILED => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_FAILED],
+                self::STATUS_DECLINE => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_FAILED],
+            ];
 
-                if($createTransaction) {
-                    $transaction->response = $walleeTransaction->__toString();
-                    $transaction->reference = $walleeTransaction->getId();
-                    Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
+            if (isset($transactionTypes[$walleeState])) {
+                try {
+                    [$type, $status] = $transactionTypes[$walleeState];
+                    self::recordTransaction($order, $walleeTransaction, $type, $status);
+                } catch (\Exception $e) {
+                    Craft::error('Could not record wallee transaction for order '.$order->id.': '.$e->getMessage(), 'craft-commerce-wallee');
                 }
-
-            } catch (\Exception $e) {
-                Craft::info($e->getMessage(), 'craft-commerce-wallee');
             }
 
 
@@ -282,8 +309,7 @@ class Gateway extends BaseGateway
             $settings = Craft::$app->getPlugins()->getPlugin('commerce-wallee')->getSettings();
             $orderStatus = explode(":", $settings['orderStatus'][strtolower($walleeState)]['orderStatus']);
 
-
-            if(count($orderStatus) > 1 && !empty($orderStatus[1])){
+            if(count($orderStatus) > 1 && !empty($orderStatus[1]) && $order->orderStatusId != $orderStatus[1]){
                 Craft::info('change order status: '.$order->orderStatusId.'-'.$orderStatus[1], 'craft-commerce-wallee');
                 $order->orderStatusId = $orderStatus[1];
                 $order->dateUpdated = new \DateTime();
@@ -296,16 +322,12 @@ class Gateway extends BaseGateway
 
     public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
     {
-        Craft::info('Authorize', 'craft-commerce-wallee');
-        dd("authorize");
-        // TODO: Implement authorize() method.
+        throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
     }
 
     public function capture(Transaction $transaction, string $reference): RequestResponseInterface
     {
-        Craft::info('Capture', 'craft-commerce-wallee');
-        dd("capture");
-        // TODO: Implement capture() method.
+        throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
     }
 
     public function createPaymentSource(BasePaymentForm $sourceData, int $userId): PaymentSource
@@ -332,9 +354,9 @@ class Gateway extends BaseGateway
     {
 
         $this->order = $transaction->order;
-        
+
         $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransaction($transaction->reference, $this->order);
-        
+
         Craft::info('Refund transaction: '.$walleeTransaction->getId(), 'craft-commerce-wallee');
 
         $amount = $walleeTransaction->getAuthorizationAmount();

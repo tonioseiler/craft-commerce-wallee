@@ -11,6 +11,7 @@
 namespace craft\commerce\wallee\controllers;
 
 use craft\commerce\wallee\CommerceWallee;
+use craft\commerce\wallee\gateways\Gateway;
 
 use Craft;
 use craft\helpers\Json;
@@ -126,31 +127,25 @@ class DefaultController extends BaseController
 
     public function actionComplete()
     {
+        $params = Craft::$app->getRequest()->getQueryParams();
 
-        //record transaction
         try {
+            $order = Order::findOne($params['orderId']);
 
-            $params = Craft::$app->getRequest()->getQueryParams();
-
-            $orderId = $params['orderId'];
-            $order = Order::findOne($orderId);
+            // The redirect back from wallee may have no customer session, so never re-price the order here
+            $order->setRecalculationMode(Order::RECALCULATION_MODE_NONE);
 
             $walleeTransaction = CommerceWallee::getInstance()->getWalleeService()->getTransactionByOrder($order, [\Wallee\Sdk\Model\TransactionState::FULFILL]);
 
-            $transaction = Commerce::getInstance()->getTransactions()->createTransaction($order);
-            $transaction->type = TransactionRecord::TYPE_PURCHASE;
-            $transaction->status = TransactionRecord::STATUS_SUCCESS;
-            if($walleeTransaction) {
-                $transaction->response = $walleeTransaction->__toString();
-                $transaction->reference = $walleeTransaction->getId();
+            // Only record a payment wallee confirms; this URL is public, and the webhook stays the authoritative path
+            if ($walleeTransaction) {
+                Gateway::recordTransaction($order, $walleeTransaction, TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_SUCCESS);
+            } else {
+                Craft::warning('No fulfilled wallee transaction found for order '.$order->id.', payment not recorded', 'craft-commerce-wallee');
             }
-
-            Commerce::getInstance()->getTransactions()->saveTransaction($transaction, true);
-
         }catch (\Exception $e){
-            Craft::info($e->getMessage(), 'craft-commerce-wallee');
+            Craft::error('Could not record wallee payment on success redirect: '.$e->getMessage(), 'craft-commerce-wallee');
         }
-
 
         Craft::$app->getResponse()->redirect($params['successUrl'])->send();
 
