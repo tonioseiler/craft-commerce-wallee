@@ -25,7 +25,7 @@ class CheckoutResponse implements RequestResponseInterface
 
     public function isProcessing(): bool
     {
-        // TODO: Implement isProcessing() method.
+        return false;
     }
 
     public function isRedirect(): bool
@@ -40,12 +40,12 @@ class CheckoutResponse implements RequestResponseInterface
 
     public function getRedirectData(): array
     {
-        // TODO: Implement getRedirectData() method.
+        return [];
     }
 
     public function getRedirectUrl(): string
     {
-        // TODO: Implement getRedirectUrl() method.
+        return '';
     }
 
     public function getTransactionReference(): string
@@ -70,6 +70,5 @@ class CheckoutResponse implements RequestResponseInterface
 
     public function redirect(): void
     {
-        // TODO: Implement redirect() method.
     }
 }

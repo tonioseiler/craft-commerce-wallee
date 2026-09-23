@@ -1,5 +1,15 @@
 # Commerce wallee Changelog
 
+## 5.0.16
+- Fixed orders being marked as unpaid when webhooks and the success redirect record the same payment at the same time (transactions are now recorded under a per-order lock)
+- Transactions with a non-positive amount are never saved
+- The success redirect only records a payment when wallee confirms a fulfilled transaction
+- The amount sent to wallee is now the order's outstanding balance in the payment currency, matching what Commerce records
+- Replaced leftover `dd()` calls with `NotImplementedException`
+- `CheckoutResponse` methods now return valid values instead of `null`
+- Payment recording failures are logged as errors
+- Refunds no longer create a new wallee transaction for the order, which could fail for fully paid orders
+
 ## 5.0.14
 - Fixed mapping of statuses, only trigger status update and emails when status actually really changes
 

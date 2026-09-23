@@ -151,9 +151,8 @@ class CommerceWalleeService extends Component
         $lineItem->setUniqueId(uniqid());
         $lineItem->setSku($order->id);
         $lineItem->setQuantity(1);
-        $paymentCurrency = Commerce::getInstance()->getPaymentCurrencies()->getPaymentCurrencyByIso($order->paymentCurrency);
-        $total = $order->getTotal() * $paymentCurrency->rate;
-        $lineItem->setAmountIncludingTax(round($total, 2));
+        // Outstanding balance of the order price, already converted to the payment currency, so it matches what Commerce records
+        $lineItem->setAmountIncludingTax(round($order->getPaymentAmount(), 2));
         $lineItem->setType(\Wallee\Sdk\Model\LineItemType::PRODUCT);
         $lineItems[] = $lineItem;
 
