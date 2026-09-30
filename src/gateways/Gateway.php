@@ -4,6 +4,7 @@
 namespace craft\commerce\wallee\gateways;
 
 use Craft;
+use craft\helpers\App;
 use craft\commerce\base\Gateway as BaseGateway;
 use craft\commerce\base\RequestResponseInterface;
 use craft\commerce\errors\NotImplementedException;
@@ -25,6 +26,15 @@ use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
 
 use Wallee\Sdk\ApiClient;
+use Wallee\Sdk\Model\CreationEntityState;
+use Wallee\Sdk\Model\CriteriaOperator;
+use Wallee\Sdk\Model\EntityQuery;
+use Wallee\Sdk\Model\EntityQueryFilter;
+use Wallee\Sdk\Model\EntityQueryFilterType;
+use Wallee\Sdk\Model\EntityQueryOrderBy;
+use Wallee\Sdk\Model\EntityQueryOrderByType;
+use Wallee\Sdk\Model\PaymentMethodConfiguration;
+use Wallee\Sdk\Service\PaymentMethodConfigurationService;
 use Wallee\Sdk\Model\TransactionState;
 
 class Gateway extends BaseGateway
@@ -60,6 +70,85 @@ class Gateway extends BaseGateway
      */
     public $apiSecretKey;
 
+    /**
+     * The settings may hold env vars (e.g. `$WALLEE_API_SECRET`), stored as-is in the project config
+     * and resolved here, where the API is called.
+     */
+    public function getSpaceId(): mixed
+    {
+        return App::parseEnv($this->spaceId);
+    }
+
+    public function getUserId(): mixed
+    {
+        return App::parseEnv($this->userId);
+    }
+
+    public function getApiSecretKey(): mixed
+    {
+        return App::parseEnv($this->apiSecretKey);
+    }
+
+    /**
+     * Active payment methods of the space, so the front end can show them before the payment starts
+     * (pass the chosen `id` as `paymentMethodId` to getPaymentFormHtml() to open the lightbox on it).
+     * Doesn't create a transaction; cached for an hour per gateway and language, failures aren't cached.
+     *
+     * @return array<array{id: int, name: string, imageUrl: ?string}>
+     */
+    public function getPaymentMethods(): array
+    {
+        $cache = Craft::$app->getCache();
+        $key = ['commerce-wallee-payment-methods', $this->id, Craft::$app->language];
+        $methods = $cache->get($key);
+
+        if ($methods === false) {
+            try {
+                $filter = (new EntityQueryFilter())
+                    ->setType(EntityQueryFilterType::LEAF)
+                    ->setOperator(CriteriaOperator::EQUALS)
+                    ->setFieldName('state')
+                    ->setValue(CreationEntityState::ACTIVE);
+                $query = (new EntityQuery())
+                    ->setFilter($filter)
+                    ->setOrderBys([(new EntityQueryOrderBy())->setFieldName('sortOrder')->setSorting(EntityQueryOrderByType::ASC)]);
+
+                $client = new ApiClient($this->getUserId(), $this->getApiSecretKey());
+                $configurations = (new PaymentMethodConfigurationService($client))->search($this->getSpaceId(), $query);
+            } catch (\Throwable $e) {
+                Craft::error('Could not fetch the wallee payment methods: ' . $e->getMessage(), 'craft-commerce-wallee');
+                return [];
+            }
+
+            $methods = array_map(fn(PaymentMethodConfiguration $configuration) => [
+                'id' => (int)$configuration->getId(),
+                'name' => $this->resolveTitle($configuration),
+                'imageUrl' => $configuration->getResolvedImageUrl(),
+            ], $configurations);
+            $cache->set($key, $methods, 3600);
+        }
+
+        return $methods;
+    }
+
+    /**
+     * The customer-facing title in the site language (keys like "de-CH"), falling back to the configuration name
+     */
+    private function resolveTitle(PaymentMethodConfiguration $configuration): string
+    {
+        $titles = $configuration->getResolvedTitle() ?? [];
+        $language = Craft::$app->language;
+        $prefix = strtok($language, '-');
+
+        foreach ([$language, ...array_keys($titles)] as $key) {
+            if (isset($titles[$key]) && ($key === $language || str_starts_with($key, $prefix))) {
+                return $titles[$key];
+            }
+        }
+
+        return $configuration->getName();
+    }
+
     private $client;
 
     private $options;
@@ -88,7 +177,7 @@ class Gateway extends BaseGateway
 
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
         if (property_exists($this->options, 'userId')) {
-            $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
+            $this->client = new ApiClient($this->options->getUserId(), $this->options->getApiSecretKey());
 
             $successUrl = $this->params['successUrl'] ?? "/";
             $failedUrl = $this->params['cancelUrl'] ?? "/";
@@ -99,7 +188,7 @@ class Gateway extends BaseGateway
             }
 
             $transactionPayload = CommerceWallee::getInstance()->getWalleeService()->createWalleeOrder($this->order, $successUrl, $failedUrl);
-            $this->transaction = $this->client->getTransactionService()->create($this->options->spaceId, $transactionPayload);
+            $this->transaction = $this->client->getTransactionService()->create($this->options->getSpaceId(), $transactionPayload);
         }
     }
 
@@ -167,7 +256,7 @@ class Gateway extends BaseGateway
     }
 
     private function fetchPaymentMethods(){
-        return $this->client->getTransactionService()->fetchPaymentMethods($this->options->spaceId, $this->transaction->getId(), 'iframe');
+        return $this->client->getTransactionService()->fetchPaymentMethods($this->options->getSpaceId(), $this->transaction->getId(), 'iframe');
     }
 
     /**
@@ -182,7 +271,7 @@ class Gateway extends BaseGateway
             }else{
                 $transactionService = new \Wallee\Sdk\Service\TransactionIframeService($this->client);
             }
-            return $transactionService->javascriptUrl($this->options->spaceId, $this->transaction->getId());
+            return $transactionService->javascriptUrl($this->options->getSpaceId(), $this->transaction->getId());
 
         }catch (\Exception $e){
             return $e->getMessage();
@@ -195,7 +284,7 @@ class Gateway extends BaseGateway
     private function getPageUrl(): string
     {
         $transactionService = new \Wallee\Sdk\Service\TransactionPaymentPageService($this->client);
-        return $transactionService->paymentPageUrl($this->options->spaceId, $this->transaction->getId());
+        return $transactionService->paymentPageUrl($this->options->getSpaceId(), $this->transaction->getId());
     }
 
     /**
@@ -267,7 +356,7 @@ class Gateway extends BaseGateway
 
             $params = Craft::$app->getRequest()->getQueryParams();
             $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
-            $client = new ApiClient($options->userId, $options->apiSecretKey);
+            $client = new ApiClient($options->getUserId(), $options->getApiSecretKey());
             $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
             $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
 
@@ -363,7 +452,7 @@ class Gateway extends BaseGateway
 
         // Only the API client is needed; initialize() would also create a new wallee transaction for the order
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
-        $this->client = new ApiClient($this->options->userId, $this->options->apiSecretKey);
+        $this->client = new ApiClient($this->options->getUserId(), $this->options->getApiSecretKey());
 
         //create a wallee transaction to refund
         $refund = new \Wallee\Sdk\Model\RefundCreate();
@@ -373,7 +462,7 @@ class Gateway extends BaseGateway
         $refund->setExternalId(uniqid());
 
         $refundService = new \Wallee\Sdk\Service\RefundService($this->client);
-        $refund = $refundService->refund($this->options->spaceId, $refund);
+        $refund = $refundService->refund($this->options->getSpaceId(), $refund);
 
         if($refund){
             return new CheckoutResponse();

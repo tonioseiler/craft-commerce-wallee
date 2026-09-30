@@ -21,6 +21,8 @@ use Craft;
 use Wallee\Sdk\Model\EntityQuery;
 use Wallee\Sdk\Model\Transaction;
 use Wallee\Sdk\Model\TransactionCreate;
+use Wallee\Sdk\Model\AddressCreate;
+use craft\elements\Address;
 use Wallee\Sdk\ApiClient;
 use Wallee\Sdk\Service\TransactionService;
 use Wallee\Sdk\Model\EntityQueryFilterType;
@@ -53,7 +55,7 @@ class CommerceWalleeService extends Component
     public function getTransactionByOrder(Order $order, $transactionStates): ?Transaction
     {
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
-        $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
+        $client = $this->connect($gateway->getUserId(), $gateway->getApiSecretKey());
 
         $entityQueryFilter = new EntityQueryFilter([
             'field_name' => 'createdOn',
@@ -71,7 +73,7 @@ class CommerceWalleeService extends Component
                 'number_of_entities' => 100,
                 'starting_entity' => $startingEntity
             ]);
-            $result = $client->getTransactionService()->search($gateway->spaceId, $query);
+            $result = $client->getTransactionService()->search($gateway->getSpaceId(), $query);
 
             foreach ($result as $entity) {
                 if($entity->getMetaData() != null && $entity->getMetaData()['orderId'] == $order->getId() && in_array($entity->getState(), $transactionStates)) {
@@ -92,7 +94,7 @@ class CommerceWalleeService extends Component
     {
 
         $gateway = Commerce::getInstance()->getGateways()->getGatewayById($order->gatewayId);
-        $client = $this->connect($gateway->userId, $gateway->apiSecretKey);
+        $client = $this->connect($gateway->getUserId(), $gateway->getApiSecretKey());
 
         $entityQueryFilter1 = new EntityQueryFilter([
             'field_name' => 'merchantReference',
@@ -117,7 +119,7 @@ class CommerceWalleeService extends Component
             'starting_entity' => 0
         ]);
 
-        $result = $client->getTransactionService()->search($gateway->spaceId, $query);
+        $result = $client->getTransactionService()->search($gateway->getSpaceId(), $query);
         if(count($result) > 0) {
             return $result[0];
         }
@@ -130,6 +132,28 @@ class CommerceWalleeService extends Component
         $transaction = $this->getTransactionById($order);
 
         return false;
+    }
+
+    /**
+     * Craft address → wallee address. The phone comes from a `telephone` custom field on the address layout, if there is one.
+     */
+    private function createWalleeAddress(Address $address, Order $order): AddressCreate
+    {
+        $walleeAddress = new AddressCreate();
+        $walleeAddress->setGivenName($address->firstName);
+        $walleeAddress->setFamilyName($address->lastName);
+        $walleeAddress->setOrganizationName($address->organization);
+        $walleeAddress->setStreet(implode("\n", array_filter([$address->addressLine1, $address->addressLine2])));
+        $walleeAddress->setPostcode($address->postalCode);
+        $walleeAddress->setCity($address->locality);
+        $walleeAddress->setCountry($address->countryCode);
+        $walleeAddress->setEmailAddress($order->email);
+
+        if ($address->getFieldLayout()?->getFieldByHandle('telephone')) {
+            $walleeAddress->setPhoneNumber($address->getFieldValue('telephone') ?: null);
+        }
+
+        return $walleeAddress;
     }
 
     public function createWalleeOrder(Order $order, $successUrl = null, $failedUrl = null): TransactionCreate
@@ -162,6 +186,19 @@ class CommerceWalleeService extends Component
         $transactionPayload->setLineItems($lineItems);
         $transactionPayload->setAutoConfirmationEnabled(true);
         $transactionPayload->setMerchantReference($order->id);
+
+        // Customer data from the order, so the lightbox / payment page doesn't ask for it again
+        $shippingAddress = $order->getShippingAddress();
+        $billingAddress = $order->getBillingAddress() ?? $shippingAddress;
+        if ($billingAddress) {
+            $transactionPayload->setBillingAddress($this->createWalleeAddress($billingAddress, $order));
+        }
+        if ($shippingAddress) {
+            $transactionPayload->setShippingAddress($this->createWalleeAddress($shippingAddress, $order));
+        }
+        if ($order->email) {
+            $transactionPayload->setCustomerEmailAddress($order->email);
+        }
 
         $transactionPayload->setFailedUrl(UrlHelper::actionUrl('commerce-wallee/default/failed', ['cancelUrl' => $failedUrl]));
         $transactionPayload->setSuccessUrl(UrlHelper::actionUrl('commerce-wallee/default/complete', ['successUrl' => $successUrl, 'orderId' => $order->id]));

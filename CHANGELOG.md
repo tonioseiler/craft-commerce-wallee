@@ -1,5 +1,11 @@
 # Commerce wallee Changelog
 
+## 5.0.17
+- The gateway settings (Space ID, User ID, secret key) support environment variables (e.g. `$WALLEE_API_SECRET`), resolved with `App::parseEnv()`; the settings form suggests them
+- Added `Gateway::getPaymentMethods()`: the space's active payment methods (id, localized title, logo), cached for an hour, so the front end can show them before the payment starts
+- The lightbox accepts a `paymentMethodId` parameter to open directly on that payment method (it always used `1`)
+- The transaction includes the order's billing and shipping address and the customer email, so the payment page / lightbox doesn't ask for them again
+
 ## 5.0.16
 - Fixed orders being marked as unpaid when webhooks and the success redirect record the same payment at the same time (transactions are now recorded under a per-order lock)
 - Transactions with a non-positive amount are never saved
