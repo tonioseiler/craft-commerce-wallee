@@ -376,9 +376,10 @@ class Gateway extends BaseGateway
 
             $walleeState = $data['state'] ?? $walleeTransaction->getState();
 
+            // PROCESSING is not recorded: the customer is still paying, and Commerce completes the order on a processing transaction
             $transactionTypes = [
                 self::STATUS_PENDING => [TransactionRecord::TYPE_AUTHORIZE, TransactionRecord::STATUS_PENDING],
-                self::STATUS_PROCESSING => [TransactionRecord::TYPE_AUTHORIZE, TransactionRecord::STATUS_PROCESSING],
+                self::STATUS_AUTHORIZED => [TransactionRecord::TYPE_AUTHORIZE, TransactionRecord::STATUS_SUCCESS],
                 self::STATUS_FULFILL => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_SUCCESS],
                 self::STATUS_FAILED => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_FAILED],
                 self::STATUS_DECLINE => [TransactionRecord::TYPE_PURCHASE, TransactionRecord::STATUS_FAILED],

@@ -1,5 +1,9 @@
 # Commerce wallee Changelog
 
+## 5.0.19
+- A `PROCESSING` webhook no longer records a processing transaction: Commerce completed the order on it, so a payment cancelled in TWINT (or any method) left a completed, unpaid order and an empty cart
+- An `AUTHORIZED` webhook records a successful authorize transaction, so the order is completed once wallee has authorized the full amount
+
 ## 5.0.18
 - The lightbox is prepared with the gateway rendering it instead of the order's gateway, so it works on a review page before the cart has a gateway (it threw a `TypeError` for carts without `gatewayId`)
 - `openWalleeLightbox(paymentMethodId)` takes the payment method as a JS argument, e.g. a method chosen on the page; the `paymentMethodId` template parameter stays the fallback
