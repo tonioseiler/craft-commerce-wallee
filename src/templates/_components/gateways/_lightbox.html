@@ -1,7 +1,8 @@
 {% js %}
-function openWalleeLightbox(){
-    {# paymentMethodId: open the lightbox on that payment method configuration (see Gateway::getPaymentMethods()) #}
-    window.LightboxCheckoutHandler.startPayment({{ (paymentMethodId ?? 1)|number_format(0, '', '') }}, function(){
+{# Opens the lightbox on a payment method configuration (see Gateway::getPaymentMethods()): the JS argument,
+   e.g. a method chosen on the page, or else the `paymentMethodId` template parameter #}
+function openWalleeLightbox(paymentMethodId){
+    window.LightboxCheckoutHandler.startPayment(paymentMethodId || {{ (paymentMethodId ?? 1)|number_format(0, '', '') }}, function(){
     console.error('An error occurred during the initialization of the payment lightbox.');
     });
 }

@@ -1,5 +1,9 @@
 # Commerce wallee Changelog
 
+## 5.0.18
+- The lightbox is prepared with the gateway rendering it instead of the order's gateway, so it works on a review page before the cart has a gateway (it threw a `TypeError` for carts without `gatewayId`)
+- `openWalleeLightbox(paymentMethodId)` takes the payment method as a JS argument, e.g. a method chosen on the page; the `paymentMethodId` template parameter stays the fallback
+
 ## 5.0.17
 - The gateway settings (Space ID, User ID, secret key) support environment variables (e.g. `$WALLEE_API_SECRET`), resolved with `App::parseEnv()`; the settings form suggests them
 - Added `Gateway::getPaymentMethods()`: the space's active payment methods (id, localized title, logo), cached for an hour, so the front end can show them before the payment starts

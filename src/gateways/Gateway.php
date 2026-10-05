@@ -175,7 +175,9 @@ class Gateway extends BaseGateway
             }
         }
 
-        $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
+        // The gateway rendering the form is the one to use; the order may not have a gateway yet
+        // (e.g. the lightbox prepared on a review page before the customer confirms)
+        $this->options = $this;
         if (property_exists($this->options, 'userId')) {
             $this->client = new ApiClient($this->options->getUserId(), $this->options->getApiSecretKey());
 
