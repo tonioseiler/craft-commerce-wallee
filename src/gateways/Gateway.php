@@ -25,7 +25,6 @@ use craft\web\View;
 use yii\web\NotFoundHttpException;
 use craft\commerce\records\Transaction as TransactionRecord;
 
-use Wallee\Sdk\ApiClient;
 use Wallee\Sdk\Model\CreationEntityState;
 use Wallee\Sdk\Model\CriteriaOperator;
 use Wallee\Sdk\Model\EntityQuery;
@@ -113,7 +112,7 @@ class Gateway extends BaseGateway
                     ->setFilter($filter)
                     ->setOrderBys([(new EntityQueryOrderBy())->setFieldName('sortOrder')->setSorting(EntityQueryOrderByType::ASC)]);
 
-                $client = new ApiClient($this->getUserId(), $this->getApiSecretKey());
+                $client = CommerceWallee::getInstance()->getWalleeService()->connect($this->getUserId(), $this->getApiSecretKey());
                 $configurations = (new PaymentMethodConfigurationService($client))->search($this->getSpaceId(), $query);
             } catch (\Throwable $e) {
                 Craft::error('Could not fetch the wallee payment methods: ' . $e->getMessage(), 'craft-commerce-wallee');
@@ -179,7 +178,7 @@ class Gateway extends BaseGateway
         // (e.g. the lightbox prepared on a review page before the customer confirms)
         $this->options = $this;
         if (property_exists($this->options, 'userId')) {
-            $this->client = new ApiClient($this->options->getUserId(), $this->options->getApiSecretKey());
+            $this->client = CommerceWallee::getInstance()->getWalleeService()->connect($this->options->getUserId(), $this->options->getApiSecretKey());
 
             $successUrl = $this->params['successUrl'] ?? "/";
             $failedUrl = $this->params['cancelUrl'] ?? "/";
@@ -358,7 +357,7 @@ class Gateway extends BaseGateway
 
             $params = Craft::$app->getRequest()->getQueryParams();
             $options = Commerce::getInstance()->getGateways()->getGatewayById($params['gateway']);
-            $client = new ApiClient($options->getUserId(), $options->getApiSecretKey());
+            $client = CommerceWallee::getInstance()->getWalleeService()->connect($options->getUserId(), $options->getApiSecretKey());
             $transactionService = new \Wallee\Sdk\Service\TransactionService($client);
             $walleeTransaction = $transactionService->read($data['spaceId'], $data['entityId']);
 
@@ -455,7 +454,7 @@ class Gateway extends BaseGateway
 
         // Only the API client is needed; initialize() would also create a new wallee transaction for the order
         $this->options = Commerce::getInstance()->getGateways()->getGatewayById($this->order->gatewayId);
-        $this->client = new ApiClient($this->options->getUserId(), $this->options->getApiSecretKey());
+        $this->client = CommerceWallee::getInstance()->getWalleeService()->connect($this->options->getUserId(), $this->options->getApiSecretKey());
 
         //create a wallee transaction to refund
         $refund = new \Wallee\Sdk\Model\RefundCreate();

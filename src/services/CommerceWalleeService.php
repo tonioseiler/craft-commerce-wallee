@@ -18,6 +18,7 @@ use craft\helpers\UrlHelper;
 use craft\base\Component;
 
 use Craft;
+use Composer\CaBundle\CaBundle;
 use Wallee\Sdk\Model\EntityQuery;
 use Wallee\Sdk\Model\Transaction;
 use Wallee\Sdk\Model\TransactionCreate;
@@ -47,9 +48,13 @@ class CommerceWalleeService extends Component
     // Public Methods
     // =========================================================================
 
-    private function connect($userId, $apiSecretKey): ApiClient
+    public function connect($userId, $apiSecretKey): ApiClient
     {
-        return new ApiClient($userId, $apiSecretKey);
+        $client = new ApiClient($userId, $apiSecretKey);
+        // The SDK ships its own outdated CA file, which lacks wallee's current (Amazon) chain
+        $client->setCertificateAuthority(CaBundle::getBundledCaBundlePath());
+
+        return $client;
     }
 
     public function getTransactionByOrder(Order $order, $transactionStates): ?Transaction

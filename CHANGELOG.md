@@ -1,5 +1,9 @@
 # Commerce wallee Changelog
 
+## 5.0.20
+- Fixed every API call failing with `SSL certificate ... unable to get local issuer certificate (20)`: the SDK pins its own CA file, which predates wallee's move to the Amazon chain. The client now verifies against the up-to-date bundle from `composer/ca-bundle`
+- All API clients are created by `CommerceWalleeService::connect()`; the gateway and the controller no longer build their own, so the payment, webhook, refund and payment method calls share the same configuration
+
 ## 5.0.19
 - A `PROCESSING` webhook no longer records a processing transaction: Commerce completed the order on it, so a payment cancelled in TWINT (or any method) left a completed, unpaid order and an empty cart
 - An `AUTHORIZED` webhook records a successful authorize transaction, so the order is completed once wallee has authorized the full amount

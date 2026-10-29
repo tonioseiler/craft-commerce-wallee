@@ -102,7 +102,7 @@ class DefaultController extends BaseController
         try {
             $options = Commerce::getInstance()->getGateways()->getGatewayById(App::env('WALLEE_GATEWAY_ID'));
 
-            $client = new \Wallee\Sdk\ApiClient($options->getUserId(), $options->getApiSecretKey());
+            $client = CommerceWallee::getInstance()->getWalleeService()->connect($options->getUserId(), $options->getApiSecretKey());
             $transactionLightboxService = new \Wallee\Sdk\Service\TransactionLightboxService($client);
 
             $order = Commerce::getInstance()->getCarts()->getCart();
